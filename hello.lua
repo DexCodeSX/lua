@@ -1,9 +1,16 @@
 --[[  
     Bisam Console (BETA)
     A modern, professional console GUI for Roblox with improved functionality and mobile support.
+    Modified for Roblox exploits and loadstring compatibility.
+    
+    Usage with loadstring:
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/DexCodeSX/lua/refs/heads/main/hello.lua'))():Initialize()
 ]]--
 
 local BisamConsole = {}
+
+-- Create a self-executing function for loadstring compatibility
+local function CreateBisamConsole()
 
 -- Configuration
 local CONFIG = {
@@ -212,17 +219,17 @@ function BisamConsole:Initialize()
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Determine parent based on environment
+    -- For exploit environment, always use CoreGui
     local success, result = pcall(function()
-        return game:GetService("RunService"):IsStudio()
+        gui.Parent = game:GetService("CoreGui")
+        return true
     end)
     
-    if success and result then
-        -- In Studio
-        gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-    else
-        -- In game
-        gui.Parent = game:GetService("CoreGui")
+    if not success then
+        -- Fallback if CoreGui is not accessible
+        pcall(function()
+            gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+        end)
     end
     
     -- Create main frame
@@ -732,6 +739,11 @@ function BisamConsole:CopyConsoleContent()
     -- Copy to clipboard
     if setclipboard then
         setclipboard(content)
+    elseif writefile then
+        -- Fallback for exploits that don't have setclipboard but have writefile
+        pcall(function()
+            writefile("BisamConsoleLog.txt", content)
+        end)
     end
 end
 
@@ -758,7 +770,7 @@ function BisamConsole:FilterConsoleBySearch(searchText)
                 else
                     child.Visible = message:lower():find(searchText, 1, true) ~= nil
                 end
-            endconsole: 
+            end
         end
     end
 end
@@ -800,5 +812,10 @@ function BisamConsole:ApplyFilters()
     end
 end
 
--- Return the module
+end
+
+-- Execute the function to create the module
+CreateBisamConsole()
+
+-- Return the module for both require and loadstring compatibility
 return BisamConsole

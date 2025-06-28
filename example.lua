@@ -1,10 +1,14 @@
 --[[
     Bisam Console Example
-    This script demonstrates how to use the Bisam Console in your Roblox game.
+    This script demonstrates how to use the Bisam Console in a Roblox exploit environment.
 ]]--
 
+-- Method 1: Using loadstring directly from GitHub
+-- loadstring(game:HttpGet('https://raw.githubusercontent.com/DexCodeSX/lua/refs/heads/main/hello.lua'))():Initialize()
+
+-- Method 2: If you have the file locally
 -- Load the Bisam Console module
-local BisamConsole = require(script.Parent:WaitForChild("hello"))
+local BisamConsole = loadstring(readfile("hello.lua"))()
 
 -- Initialize the console
 BisamConsole:Initialize()

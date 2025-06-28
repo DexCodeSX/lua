@@ -1,6 +1,6 @@
 # Bisam Console (BETA)
 
-A modern, professional console GUI for Roblox with improved functionality and mobile support.
+A modern, professional console GUI for Roblox with improved functionality and mobile support. Modified for Roblox exploits and loadstring compatibility.
 
 ## Features
 
@@ -58,6 +58,22 @@ A modern, professional console GUI for Roblox with improved functionality and mo
 
 ## Installation
 
+### For Roblox Exploits
+
+**Method 1: Using GitHub loadstring**
+```lua
+loadstring(game:HttpGet('https://raw.githubusercontent.com/DexCodeSX/lua/refs/heads/main/hello.lua'))():Initialize()
+```
+
+**Method 2: Using local file**
+```lua
+-- If you have the file saved locally
+local BisamConsole = loadstring(readfile("hello.lua"))()
+BisamConsole:Initialize()
+```
+
+### For Roblox Studio/Games
+
 1. Add the `hello.lua` script to your Roblox game as a ModuleScript
 2. Require the module in your script
 3. Initialize the console
@@ -74,12 +90,11 @@ BisamConsole:Initialize()
 
 See `example.lua` for a complete usage example.
 
-```lua
--- Load the Bisam Console module
-local BisamConsole = require(script.Parent:WaitForChild("hello"))
+### For Roblox Exploits
 
--- Initialize the console
-BisamConsole:Initialize()
+```lua
+-- Load the Bisam Console module using loadstring
+loadstring(game:HttpGet('https://raw.githubusercontent.com/DexCodeSX/lua/refs/heads/main/hello.lua'))():Initialize()
 
 -- Regular output message
 print("This is a regular output message")
@@ -91,6 +106,19 @@ warn("This is a warning message")
 pcall(function()
     error("This is an error message")
 end)
+```
+
+### For Roblox Studio/Games
+
+```lua
+-- Load the Bisam Console module
+local BisamConsole = require(path.to.BisamConsole)
+
+-- Initialize the console
+BisamConsole:Initialize()
+
+-- Regular output message
+print("This is a regular output message")
 ```
 
 ## API Reference
@@ -125,6 +153,13 @@ The Bisam Console is fully optimized for mobile devices:
 - Responsive layout adapts to different screen sizes
 - Special touch interactions for the minimize button
 - Easy-to-use filter menu with touch-friendly controls
+
+## Exploit-Specific Features
+
+- Compatible with Roblox exploits using loadstring
+- Fallback mechanisms for different exploit capabilities
+- Clipboard support with setclipboard or writefile fallback
+- CoreGui integration with PlayerGui fallback
 
 ## Code Quality
 
