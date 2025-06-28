@@ -28,7 +28,6 @@ A modern, professional console GUI for Roblox with improved functionality and mo
 #### Main Control Buttons
 - **Copy**: Copies all console content (or search results if search is active)
 - **Clear**: Clears all console content
-- **Pause/Start**: Toggles console logging (button text changes between "Pause" and "Start")
 - **Search Bar**: Search through console messages
 - **Filter Menu**: Opens popup with filtering options
 
@@ -40,8 +39,9 @@ A modern, professional console GUI for Roblox with improved functionality and mo
   - Error messages
   - Output messages
   - Warning messages
+  - Info messages
   - Timestamp display
-- **Controls**: "Save" and "Close" buttons
+- **Controls**: "Close" button
 - **Mobile**: Tap outside popup to close
 
 ### Console Functionality
@@ -50,11 +50,18 @@ A modern, professional console GUI for Roblox with improved functionality and mo
   - Error: Red text with "ERROR:" prefix
   - Output: White text with "OUTPUT:" prefix
   - Warning: Yellow text with "WARN:" prefix
+  - Info: Blue text with "INFO:" prefix
+- **Syntax Highlighting**:
+  - Keywords: Blue text (e.g., function, local, if, then)
+  - Strings: Gold text (text within quotes)
+  - Numbers: Purple text
+  - Comments: Green text (text after --)
 - **Technical Features**:
   - ScrollingFrame with infinite scrolling for console output
   - Threading using `task.spawn` for console operations
   - Support for `\n` newlines similar to F9 developer console
   - Smooth scrolling with animated scroll bar
+  - Rich text formatting for code readability
 
 ## Installation
 
@@ -177,3 +184,9 @@ The Bisam Console is fully optimized for mobile devices:
 - Improved searchBox handling to prevent runtime errors
 - Added fallback mechanisms for various exploit environments
 - Implemented defensive programming practices throughout the codebase
+- Added Info message type with blue text and "INFO:" prefix
+- Added syntax highlighting for code in messages
+- Removed Pause button for simplified interface
+- Removed Save button from filter menu (automatic saving)
+- Improved modern UI design with better spacing and layout
+- Enhanced filter menu with Info message filtering option

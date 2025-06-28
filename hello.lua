@@ -22,6 +22,7 @@ local CONFIG = {
         TEXT = Color3.fromRGB(255, 255, 255),
         ERROR = Color3.fromRGB(255, 80, 80),
         WARNING = Color3.fromRGB(255, 200, 80),
+        INFO = Color3.fromRGB(80, 170, 255),  -- New blue color for Info messages
         TIMESTAMP = Color3.fromRGB(150, 150, 150),
         BUTTON = Color3.fromRGB(60, 60, 60),
         BUTTON_HOVER = Color3.fromRGB(80, 80, 80),
@@ -61,6 +62,7 @@ local filters = {
     error = true,
     output = true,
     warning = true,
+    info = true,     -- New filter for Info messages
     timestamp = true
 }
 
@@ -241,6 +243,15 @@ function BisamConsole:Initialize()
     mainFrame.Parent = gui
     createCorner(mainFrame)
     
+    -- Add subtle gradient background for modern look
+    local backgroundGradient = Instance.new("UIGradient")
+    backgroundGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, CONFIG.COLORS.BACKGROUND),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 45))
+    })
+    backgroundGradient.Rotation = 45
+    backgroundGradient.Parent = mainFrame
+    
     -- Create header
     self:CreateHeader()
     
@@ -393,14 +404,8 @@ function BisamConsole:CreateControlButtons()
         self:ClearConsole()
     end)
     
-    -- Pause/Start button
-    local pauseButton = createButton(controlFrame, "Pause", UDim2.new(0, 60, 0, 30), UDim2.new(0, 150, 0.5, -15), function()
-        isPaused = not isPaused
-        pauseButton.Text = isPaused and "Start" or "Pause"
-    end)
-    
     -- Search bar
-    local searchContainer, searchBox = createSearchBar(controlFrame, UDim2.new(0.5, -100, 0.5, -15), UDim2.new(0.3, 0, 0, 30))
+    local searchContainer, searchBox = createSearchBar(controlFrame, UDim2.new(0.5, -100, 0.5, -15), UDim2.new(0.4, 0, 0, 30))
     
     -- Add nil check before connecting signal
     if searchBox then
@@ -494,8 +499,8 @@ function BisamConsole:CreateFilterMenu()
     filterMenu = Instance.new("Frame")
     filterMenu.Name = "FilterMenu"
     filterMenu.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    filterMenu.Size = UDim2.new(0, 200, 0, 220)
-    filterMenu.Position = UDim2.new(0.5, -100, 0.5, -110)
+    filterMenu.Size = UDim2.new(0, 200, 0, 255)  -- Increased height for the new Info option
+    filterMenu.Position = UDim2.new(0.5, -100, 0.5, -127)  -- Adjusted position to keep it centered
     filterMenu.Visible = false
     filterMenu.Parent = gui
     createCorner(filterMenu)
@@ -513,7 +518,7 @@ function BisamConsole:CreateFilterMenu()
     -- Options container
     local optionsFrame = Instance.new("Frame")
     optionsFrame.BackgroundTransparency = 1
-    optionsFrame.Size = UDim2.new(1, 0, 0, 140)
+    optionsFrame.Size = UDim2.new(1, 0, 0, 175)  -- Increased height for the new Info option
     optionsFrame.Position = UDim2.new(0, 0, 0, 30)
     optionsFrame.Parent = filterMenu
     createPadding(optionsFrame)
@@ -534,7 +539,12 @@ function BisamConsole:CreateFilterMenu()
         self:ApplyFilters()
     end)
     
-    local timestampOption, timestampCircle = createFilterOption(optionsFrame, "Show Timestamps", filters.timestamp, UDim2.new(0, 0, 0, 105), function(enabled)
+    local infoOption, infoCircle = createFilterOption(optionsFrame, "Info Messages", filters.info, UDim2.new(0, 0, 0, 105), function(enabled)
+        filters.info = enabled
+        self:ApplyFilters()
+    end)
+    
+    local timestampOption, timestampCircle = createFilterOption(optionsFrame, "Show Timestamps", filters.timestamp, UDim2.new(0, 0, 0, 140), function(enabled)
         filters.timestamp = enabled
         self:ApplyFilters()
     end)
@@ -546,11 +556,7 @@ function BisamConsole:CreateFilterMenu()
     buttonFrame.Position = UDim2.new(0, 0, 1, -50)
     buttonFrame.Parent = filterMenu
     
-    local saveButton = createButton(buttonFrame, "Save", UDim2.new(0, 80, 0, 30), UDim2.new(0, 10, 0.5, -15), function()
-        filterMenu.Visible = false
-    end)
-    
-    local closeButton = createButton(buttonFrame, "Close", UDim2.new(0, 80, 0, 30), UDim2.new(1, -90, 0.5, -15), function()
+    local closeButton = createButton(buttonFrame, "Close", UDim2.new(0, 100, 0, 30), UDim2.new(0.5, -50, 0.5, -15), function()
         filterMenu.Visible = false
     end)
     
@@ -586,11 +592,10 @@ function BisamConsole:ConnectLogService()
     
     -- Connect to new logs
     LogService.MessageOut:Connect(function(message, messageType)
-        if not isPaused then
-            task.spawn(function()
-                self:AddConsoleMessage(message, messageType)
-            end)
-        end
+        -- Always process messages since we removed the Pause button
+        task.spawn(function()
+            self:AddConsoleMessage(message, messageType)
+        end)
     end)
     
     return self
@@ -606,6 +611,8 @@ function BisamConsole:AddConsoleMessage(message, messageType)
     elseif messageType == Enum.MessageType.MessageOutput and not filters.output then
         shouldShow = false
     elseif messageType == Enum.MessageType.MessageWarning and not filters.warning then
+        shouldShow = false
+    elseif messageType == Enum.MessageType.MessageInfo and not filters.info then
         shouldShow = false
     end
     
@@ -648,19 +655,56 @@ function BisamConsole:AddConsoleMessage(message, messageType)
     elseif messageType == Enum.MessageType.MessageWarning then
         textColor = CONFIG.COLORS.WARNING
         prefix = "WARN: "
+    elseif messageType == Enum.MessageType.MessageInfo then
+        textColor = CONFIG.COLORS.INFO
+        prefix = "INFO: "
     elseif messageType == Enum.MessageType.MessageOutput then
         textColor = CONFIG.COLORS.TEXT
         prefix = "OUTPUT: "
     end
     
-    -- Create message text
+    -- Create message text with syntax highlighting
     local textLabel = Instance.new("TextLabel")
     textLabel.BackgroundTransparency = 1
     textLabel.Size = UDim2.new(1, -xOffset, 0, 0)
     textLabel.Position = UDim2.new(0, xOffset, 0, 0)
     textLabel.Font = CONFIG.FONT
     textLabel.TextSize = CONFIG.TEXT_SIZE
-    textLabel.Text = prefix .. message
+    textLabel.RichText = true  -- Enable rich text for syntax highlighting
+    
+    -- Apply syntax highlighting
+    local highlightedMessage = message
+    
+    -- Highlight keywords, strings, numbers, and comments
+    if messageType == Enum.MessageType.MessageOutput or 
+       messageType == Enum.MessageType.MessageInfo then
+        -- Highlight Lua keywords
+        highlightedMessage = highlightedMessage:gsub(
+            "(\\b)(and|break|do|else|elseif|end|false|for|function|if|in|local|nil|not|or|repeat|return|then|true|until|while)(\\b)", 
+            "%1<font color='rgb(85,170,255)'>%2</font>%3"
+        )
+        
+        -- Highlight strings
+        highlightedMessage = highlightedMessage:gsub(
+            "([\"\\'])(.-)%1", 
+            "<font color='rgb(200,180,100)'>%1%2%1</font>"
+        )
+        
+        -- Highlight numbers
+        highlightedMessage = highlightedMessage:gsub(
+            "(\\b)([0-9]+)(\\b)", 
+            "%1<font color='rgb(170,120,255)'>%2</font>%3"
+        )
+        
+        -- Highlight comments
+        highlightedMessage = highlightedMessage:gsub(
+            "(%-%-.-)", 
+            "<font color='rgb(100,180,100)'>%1</font>"
+        )
+    end
+    
+    -- Set the text with prefix and highlighting
+    textLabel.Text = prefix .. highlightedMessage
     textLabel.TextColor3 = textColor
     textLabel.TextXAlignment = Enum.TextXAlignment.Left
     textLabel.TextYAlignment = Enum.TextYAlignment.Top
@@ -730,6 +774,8 @@ function BisamConsole:CopyConsoleContent()
                     content = content .. "ERROR: "
                 elseif messageType == tostring(Enum.MessageType.MessageWarning) then
                     content = content .. "WARN: "
+                elseif messageType == tostring(Enum.MessageType.MessageInfo) then
+                    content = content .. "INFO: "
                 elseif messageType == tostring(Enum.MessageType.MessageOutput) then
                     content = content .. "OUTPUT: "
                 end
@@ -792,6 +838,8 @@ function BisamConsole:ApplyFilters()
                 elseif messageType == tostring(Enum.MessageType.MessageOutput) and not filters.output then
                     shouldShow = false
                 elseif messageType == tostring(Enum.MessageType.MessageWarning) and not filters.warning then
+                    shouldShow = false
+                elseif messageType == tostring(Enum.MessageType.MessageInfo) and not filters.info then
                     shouldShow = false
                 end
                 

@@ -5,6 +5,10 @@
     Recent improvements:
     - Added nil checks to prevent "attempt to index nil with 'Text'" errors
     - Enhanced error handling for better stability in exploit environments
+    - Added Info message type with blue text and "INFO:" prefix
+    - Removed Pause button and Save popup for better UX
+    - Added syntax highlighting for code in messages
+    - Improved modern UI design
 ]]--
 
 -- Method 1: Using loadstring directly from GitHub
@@ -29,6 +33,22 @@ local function testConsole()
     pcall(function()
         error("This is an error message")
     end)
+    
+    -- Info message (new message type)
+    if printidentity then -- Check if we're in an exploit environment
+        -- Use LogService directly for Info messages
+        game:GetService("LogService"):PublishAsync(Enum.MessageType.MessageInfo, "This is an info message")
+    else
+        -- Alternative method for environments without PublishAsync
+        local message = Instance.new("Message")
+        message.Text = "This is an info message"
+        message.Parent = workspace
+        task.wait(0.1)
+        message:Destroy()
+    end
+    
+    -- Code example with syntax highlighting
+    print("function exampleCode()\n    local x = 10 -- This is a comment\n    if x > 5 then\n        return true\n    else\n        return false\n    end\nend")
     
     -- Multi-line message
     print("This is a multi-line message\nLine 2 of the message\nLine 3 of the message")
