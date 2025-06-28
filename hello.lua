@@ -402,9 +402,12 @@ function BisamConsole:CreateControlButtons()
     -- Search bar
     local searchContainer, searchBox = createSearchBar(controlFrame, UDim2.new(0.5, -100, 0.5, -15), UDim2.new(0.3, 0, 0, 30))
     
-    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        self:FilterConsoleBySearch(searchBox.Text)
-    end)
+    -- Add nil check before connecting signal
+    if searchBox then
+        searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+            self:FilterConsoleBySearch(searchBox.Text)
+        end)
+    end
     
     -- Filter button
     local filterButton = createButton(controlFrame, "Filters", UDim2.new(0, 60, 0, 30), UDim2.new(1, -70, 0.5, -15), function()
@@ -758,7 +761,8 @@ function BisamConsole:ClearConsole()
 end
 
 function BisamConsole:FilterConsoleBySearch(searchText)
-    searchText = searchText:lower()
+    -- Ensure searchText is not nil before calling lower()
+    searchText = searchText and searchText:lower() or ""
     
     for _, child in pairs(scrollingFrame:GetChildren()) do
         if child:IsA("Frame") then

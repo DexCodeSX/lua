@@ -1,6 +1,10 @@
---[[
+--[[  
     Bisam Console Example
     This script demonstrates how to use the Bisam Console in a Roblox exploit environment.
+    
+    Recent improvements:
+    - Added nil checks to prevent "attempt to index nil with 'Text'" errors
+    - Enhanced error handling for better stability in exploit environments
 ]]--
 
 -- Method 1: Using loadstring directly from GitHub
