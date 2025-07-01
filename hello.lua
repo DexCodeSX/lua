@@ -766,6 +766,7 @@ function BisamConsole:CreateToggleButton()
                 if holdStartTime and tick() - startTime >= HOLD_TIME then
                     holdIndicator.Visible = false
                     dragIndicator.Visible = true
+                    isDragging = true -- Set dragging to true after hold time
                     
                     -- Animate drag indicator appearance
                     game:GetService("TweenService"):Create(
@@ -857,8 +858,9 @@ function BisamConsole:CreateToggleButton()
         if input.UserInputType == Enum.UserInputType.Touch and holdStartTime then
             local holdDuration = tick() - holdStartTime
             
-            if holdDuration >= HOLD_TIME then
-                -- Long hold (0.5s), enable dragging
+            -- Check if we're already dragging or if we've held long enough
+            if isDragging or holdDuration >= HOLD_TIME then
+                -- Set dragging flag if not already set
                 isDragging = true
                 
                 -- Add visual feedback for active dragging with CONFIG intensity
@@ -904,7 +906,7 @@ function BisamConsole:CreateFilterMenu()
     -- Create container for shadow effect
     local menuContainer = Instance.new("Frame")
     menuContainer.Name = "FilterMenuContainer"
-    menuContainer.BackgroundTransparency = 1
+    menuContainer.BackgroundTransparency = 1 -- Fully transparent background
     menuContainer.Size = UDim2.new(0, 240, 0, 295)  -- Larger to accommodate shadow
     menuContainer.Position = UDim2.new(0.5, -120, 0.5, -147)  -- Centered
     menuContainer.Visible = false
@@ -913,7 +915,7 @@ function BisamConsole:CreateFilterMenu()
     -- Create shadow
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
-    shadow.BackgroundTransparency = 1
+    shadow.BackgroundTransparency = 1 -- Fully transparent background
     shadow.Image = "rbxassetid://1316045217" -- Soft shadow image
     shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
     shadow.ImageTransparency = 0.6
@@ -1414,6 +1416,12 @@ function BisamConsole:MaximizeConsole()
     local targetSize = UDim2.new(0.6, 0, 0.6, 0) -- Fixed consistent size
     local targetPos = UDim2.new(0.2, 0, 0.2, 0) -- Fixed position
     
+    -- Reset the frameContainer size to ensure consistent UI sizing
+    if mainFrame and mainFrame.Parent then
+        mainFrame.Parent.Size = targetSize
+        mainFrame.Parent.Position = targetPos
+    end
+    
     -- Apply initial transparency
     local originalTransparencies = {}
     for _, child in pairs(mainFrame:GetDescendants()) do
@@ -1488,7 +1496,7 @@ function BisamConsole:ToggleFilterMenu()
         if not menuContainer.Visible then
             -- Show filter menu with animation
             menuContainer.Visible = true
-            menuContainer.BackgroundTransparency = 1
+            menuContainer.BackgroundTransparency = 1 -- Keep fully transparent
             
             -- Position menu relative to toggle button if it exists
             if toggleButton and toggleButton.Parent then
@@ -1521,13 +1529,20 @@ function BisamConsole:ToggleFilterMenu()
                 -- Scale animation
                 menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X * 0.9, 0, menuContainer.AbsoluteSize.Y * 0.9)
                 
-                -- Fade in animation
-                for i = 1, 10 do
-                    if not menuContainer or not menuContainer.Parent then break end
-                    menuContainer.BackgroundTransparency = 1 - (i/10)
-                    menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X + (menuContainer.AbsoluteSize.X * 0.01), 
-                                                 0, menuContainer.AbsoluteSize.Y + (menuContainer.AbsoluteSize.Y * 0.01))
-                    task.wait(0.01)
+                -- Fade in animation for the filter menu, not the container
+                local filterMenuFrame = menuContainer:FindFirstChild("FilterMenu")
+                if filterMenuFrame then
+                    -- Start with more transparency
+                    filterMenuFrame.BackgroundTransparency = 0.5
+                    
+                    -- Animate to full opacity
+                    for i = 5, 0, -1 do
+                        if not filterMenuFrame or not filterMenuFrame.Parent then break end
+                        filterMenuFrame.BackgroundTransparency = i/10
+                        menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X + (menuContainer.AbsoluteSize.X * 0.01), 
+                                                     0, menuContainer.AbsoluteSize.Y + (menuContainer.AbsoluteSize.Y * 0.01))
+                        task.wait(0.01)
+                    end
                 end
                 
                 -- Ensure final size
@@ -1536,13 +1551,19 @@ function BisamConsole:ToggleFilterMenu()
         else
             -- Hide with animation
             task.spawn(function()
-                for i = 1, 10 do
-                    if not menuContainer or not menuContainer.Parent then break end
-                    menuContainer.BackgroundTransparency = i/10
-                    menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X - (menuContainer.AbsoluteSize.X * 0.01), 
-                                                 0, menuContainer.AbsoluteSize.Y - (menuContainer.AbsoluteSize.Y * 0.01))
-                    task.wait(0.01)
+                -- Animate the filter menu frame, not the container
+                local filterMenuFrame = menuContainer:FindFirstChild("FilterMenu")
+                if filterMenuFrame then
+                    -- Fade out animation for the filter menu
+                    for i = 0, 10 do
+                        if not filterMenuFrame or not filterMenuFrame.Parent then break end
+                        filterMenuFrame.BackgroundTransparency = i/10
+                        menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X - (menuContainer.AbsoluteSize.X * 0.01), 
+                                                     0, menuContainer.AbsoluteSize.Y - (menuContainer.AbsoluteSize.Y * 0.01))
+                        task.wait(0.01)
+                    end
                 end
+                
                 menuContainer.Visible = false
                 
                 -- Hide close detector
