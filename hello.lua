@@ -891,10 +891,15 @@ function BisamConsole:CreateToggleButton()
                 newXOffset = math.clamp(newXOffset, 0, maxX)
                 newYOffset = math.clamp(newYOffset, 0, maxY)
                 
+                -- Store the current position to prevent jumping
                 toggleButton.Position = UDim2.new(
-                    dragStartOffset.X.Scale, newXOffset,
-                    dragStartOffset.Y.Scale, newYOffset
+                    0, newXOffset, -- Use absolute positioning to prevent scale issues
+                    0, newYOffset
                 )
+                
+                -- Update dragStartOffset to prevent position jumps if input changes rapidly
+                dragStartOffset = UDim2.new(0, newXOffset, 0, newYOffset)
+                dragStartPosition = input.Position
             end
         end
     end)
@@ -1235,6 +1240,7 @@ function BisamConsole:CreateFilterMenu()
     filterMenu.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             local holdDuration = tick() - (menuHoldStartTime or 0)
+            local wasHolding = menuHoldStartTime ~= nil
             menuHoldStartTime = nil
             
             -- Hide indicators
@@ -1247,23 +1253,22 @@ function BisamConsole:CreateFilterMenu()
                 local screenSize = gui.AbsoluteSize
                 local menuSize = menuContainer.AbsoluteSize
                 
-                -- Calculate current position
-                local posX = menuContainer.Position.X.Offset / screenSize.X
-                local posY = menuContainer.Position.Y.Offset / screenSize.Y
-                
-                -- Snap to edges if close with better edge detection using CONFIG threshold
-                local threshold = CONFIG.SNAP_TO_EDGE_THRESHOLD
-                if posX < threshold then posX = 20 end
-                if posX > (1 - threshold) then posX = screenSize.X - menuSize.X - 20 end
-                if posY < threshold then posY = 20 end
-                if posY > (1 - threshold) then posY = screenSize.Y - menuSize.Y - 20 end
+                -- Calculate new position in absolute pixels
+                local newXPos = math.clamp(menuContainer.Position.X.Offset, 20, screenSize.X - menuSize.X - 20)
+                local newYPos = math.clamp(menuContainer.Position.Y.Offset, 20, screenSize.Y - menuSize.Y - 20)
                 
                 -- Animate to snapped position
                 game:GetService("TweenService"):Create(
                     menuContainer,
                     TweenInfo.new(CONFIG.DRAG_ANIMATION_SPEED, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-                    {Position = UDim2.new(0, posX, 0, posY)}
+                    {Position = UDim2.new(0, newXPos, 0, newYPos)}
                 ):Play()
+                
+                -- Prevent menu from closing after dragging
+                task.wait(0.1) -- Small delay to ensure click event doesn't trigger
+            elseif wasHolding and holdDuration < MENU_HOLD_TIME then
+                -- This was a short tap, not a drag - allow normal click behavior
+                -- But don't close the menu automatically
             end
             
             isDraggingMenu = false
@@ -1472,9 +1477,21 @@ function BisamConsole:MinimizeConsole()
     local startPos = mainFrame.Position
     local startSize = mainFrame.Size
     
+    -- Save the target size and position for when we maximize again
+    -- This ensures the console returns to the same size after minimizing
+    if not mainFrame:GetAttribute("TargetSize") then
+        mainFrame:SetAttribute("TargetSize", {X = {Scale = startSize.X.Scale, Offset = startSize.X.Offset}, 
+                                            Y = {Scale = startSize.Y.Scale, Offset = startSize.Y.Offset}})
+    end
+    
+    if not mainFrame:GetAttribute("TargetPos") then
+        mainFrame:SetAttribute("TargetPos", {X = {Scale = startPos.X.Scale, Offset = startPos.X.Offset}, 
+                                           Y = {Scale = startPos.Y.Scale, Offset = startPos.Y.Offset}})
+    end
+    
     -- Animate minimizing
-    local targetPos = UDim2.new(toggleButton.Position.X.Scale, toggleButton.Position.X.Offset, 
-                               toggleButton.Position.Y.Scale, toggleButton.Position.Y.Offset)
+    local targetPos = UDim2.new(0, toggleButton.Position.X.Offset, 
+                               0, toggleButton.Position.Y.Offset)
     local targetSize = UDim2.new(0, 0, 0, 0)
     
     -- Store original transparency values
@@ -1548,9 +1565,29 @@ function BisamConsole:MaximizeConsole()
     mainFrame.Position = startPos
     mainFrame.Visible = true
     
-    -- Target size and position - fixed to use absolute values to avoid size bugs
-    local targetSize = UDim2.new(0.6, 0, 0.6, 0) -- Fixed consistent size
-    local targetPos = UDim2.new(0.2, 0, 0.2, 0) -- Fixed position
+    -- Get stored target size and position or use defaults
+    local targetSizeAttr = mainFrame:GetAttribute("TargetSize")
+    local targetPosAttr = mainFrame:GetAttribute("TargetPos")
+    
+    local targetSize, targetPos
+    
+    if targetSizeAttr then
+        targetSize = UDim2.new(
+            targetSizeAttr.X.Scale, targetSizeAttr.X.Offset,
+            targetSizeAttr.Y.Scale, targetSizeAttr.Y.Offset
+        )
+    else
+        targetSize = UDim2.new(0.6, 0, 0.6, 0) -- Default size
+    end
+    
+    if targetPosAttr then
+        targetPos = UDim2.new(
+            targetPosAttr.X.Scale, targetPosAttr.X.Offset,
+            targetPosAttr.Y.Scale, targetPosAttr.Y.Offset
+        )
+    else
+        targetPos = UDim2.new(0.2, 0, 0.2, 0) -- Default position
+    end
     
     -- Reset the frameContainer size to ensure consistent UI sizing
     -- This is critical to fix the UI size inconsistency when reopening
@@ -1559,6 +1596,17 @@ function BisamConsole:MaximizeConsole()
         -- This ensures the UI will always be the correct size when maximized
         mainFrame.Parent.Size = targetSize
         mainFrame.Parent.Position = targetPos
+        
+        -- Store these values as attributes to ensure they're preserved
+        if not mainFrame:GetAttribute("TargetSize") then
+            mainFrame:SetAttribute("TargetSize", {X = {Scale = targetSize.X.Scale, Offset = targetSize.X.Offset}, 
+                                                Y = {Scale = targetSize.Y.Scale, Offset = targetSize.Y.Offset}})
+        end
+        
+        if not mainFrame:GetAttribute("TargetPos") then
+            mainFrame:SetAttribute("TargetPos", {X = {Scale = targetPos.X.Scale, Offset = targetPos.X.Offset}, 
+                                               Y = {Scale = targetPos.Y.Scale, Offset = targetPos.Y.Offset}})
+        end
     end
     
     -- Apply initial transparency
