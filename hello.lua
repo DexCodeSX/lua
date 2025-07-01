@@ -17,29 +17,38 @@ local CONFIG = {
     TITLE = "Bisam Console (BETA)",
     TOGGLE_TEXT = "BC",
     COLORS = {
-        BACKGROUND = Color3.fromRGB(30, 30, 30),
-        HEADER = Color3.fromRGB(40, 40, 40),
-        TEXT = Color3.fromRGB(255, 255, 255),
-        ERROR = Color3.fromRGB(255, 80, 80),
-        WARNING = Color3.fromRGB(255, 200, 80),
-        INFO = Color3.fromRGB(80, 170, 255),  -- New blue color for Info messages
-        TIMESTAMP = Color3.fromRGB(150, 150, 150),
-        BUTTON = Color3.fromRGB(60, 60, 60),
-        BUTTON_HOVER = Color3.fromRGB(80, 80, 80),
-        GRADIENT_START = Color3.fromRGB(85, 170, 255),
-        GRADIENT_END = Color3.fromRGB(170, 85, 255),
-        FILTER_ENABLED = Color3.fromRGB(80, 200, 120),
-        FILTER_DISABLED = Color3.fromRGB(200, 80, 80)
+        -- Modern sleek primary colors
+        BACKGROUND = Color3.fromRGB(22, 22, 26),       -- Darker background for better contrast
+        HEADER = Color3.fromRGB(32, 32, 38),           -- Slightly lighter header
+        TEXT = Color3.fromRGB(240, 240, 245),          -- Softer white text
+        ERROR = Color3.fromRGB(255, 75, 75),           -- Vibrant red for errors
+        WARNING = Color3.fromRGB(255, 190, 60),        -- Warm yellow for warnings
+        INFO = Color3.fromRGB(65, 160, 255),           -- Bright blue for info
+        TIMESTAMP = Color3.fromRGB(140, 140, 150),     -- Subtle gray for timestamps
+        BUTTON = Color3.fromRGB(45, 45, 55),           -- Deeper button color
+        BUTTON_HOVER = Color3.fromRGB(65, 65, 80),     -- Lighter hover state
+        GRADIENT_START = Color3.fromRGB(65, 180, 255), -- Vibrant blue start
+        GRADIENT_END = Color3.fromRGB(180, 75, 255),   -- Rich purple end
+        FILTER_ENABLED = Color3.fromRGB(70, 210, 110), -- Brighter green
+        FILTER_DISABLED = Color3.fromRGB(210, 70, 70), -- Brighter red
+        DRAG_INDICATOR = Color3.fromRGB(180, 75, 255), -- Drag indicator color
+        GLOW_EFFECT = Color3.fromRGB(120, 120, 255)    -- Glow effect color
     },
-    CORNER_RADIUS = UDim.new(0, 6),
-    PADDING = UDim.new(0, 8),
-    FONT = Enum.Font.Gotham,
+    CORNER_RADIUS = UDim.new(0, 8),                   -- Slightly more rounded corners
+    PADDING = UDim.new(0, 10),                         -- More padding for better spacing
+    FONT = Enum.Font.GothamSemibold,                   -- Semibold for better readability
     TEXT_SIZE = 14,
-    HEADER_HEIGHT = 40,
-    BUTTON_SIZE = UDim2.new(0, 30, 0, 30),
-    TOGGLE_SIZE = UDim2.new(0, 40, 0, 40),
-    MOBILE_HOLD_TIME = 0.5,
-    ANIMATION_TIME = 0.3
+    HEADER_HEIGHT = 42,                                -- Slightly taller header
+    BUTTON_SIZE = UDim2.new(0, 32, 0, 32),             -- Slightly larger buttons
+    TOGGLE_SIZE = UDim2.new(0, 45, 0, 45),             -- Larger toggle for mobile
+    MOBILE_HOLD_TIME = 0.5,                            -- Hold time for dragging (exactly 0.5s)
+    ANIMATION_TIME = 0.25,                             -- Faster animations
+    TOGGLE_SHADOW_SIZE = 4,                            -- Increased shadow size for toggle button
+    TOGGLE_SHADOW_TRANSPARENCY = 0.7,                  -- Shadow transparency
+    MOBILE_DRAG_FEEDBACK = true,                       -- Enable visual feedback for mobile dragging
+    TOUCH_FEEDBACK_INTENSITY = 0.8,                    -- Intensity of touch feedback (0-1)
+    SNAP_TO_EDGE_THRESHOLD = 0.1,                      -- Threshold for snapping to edges (0-1)
+    DRAG_ANIMATION_SPEED = 0.3                         -- Speed of drag animations
 }
 
 -- Variables
@@ -136,25 +145,131 @@ local function createButton(parent, text, size, position, callback)
 end
 
 local function createSearchBar(parent, position, size)
+    -- Create container with modern styling
     local searchContainer = Instance.new("Frame")
     searchContainer.BackgroundColor3 = CONFIG.COLORS.BUTTON
     searchContainer.Size = size or UDim2.new(0.3, 0, 0, 30)
     searchContainer.Position = position or UDim2.new(0, 0, 0, 0)
     searchContainer.Parent = parent
     
-    createCorner(searchContainer)
+    createCorner(searchContainer, UDim.new(0, 8)) -- More rounded corners
     
+    -- Add subtle inner stroke for depth
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = CONFIG.COLORS.GRADIENT_START
+    stroke.Transparency = 0.7
+    stroke.Thickness = 1
+    stroke.Parent = searchContainer
+    
+    -- Create search icon
+    local searchIcon = Instance.new("TextLabel")
+    searchIcon.BackgroundTransparency = 1
+    searchIcon.Size = UDim2.new(0, 20, 0, 20)
+    searchIcon.Position = UDim2.new(0, 8, 0.5, -10)
+    searchIcon.Font = Enum.Font.GothamBold
+    searchIcon.TextSize = CONFIG.TEXT_SIZE
+    searchIcon.Text = "🔍" -- Search icon
+    searchIcon.TextColor3 = CONFIG.COLORS.TEXT
+    searchIcon.TextTransparency = 0.3
+    searchIcon.Parent = searchContainer
+    
+    -- Create search box with improved styling
     local searchBox = Instance.new("TextBox")
     searchBox.BackgroundTransparency = 1
-    searchBox.Size = UDim2.new(1, -10, 1, 0)
-    searchBox.Position = UDim2.new(0, 5, 0, 0)
+    searchBox.Size = UDim2.new(1, -40, 1, 0)
+    searchBox.Position = UDim2.new(0, 30, 0, 0)
     searchBox.Font = CONFIG.FONT
     searchBox.TextSize = CONFIG.TEXT_SIZE
     searchBox.Text = ""
     searchBox.PlaceholderText = "Search..."
     searchBox.TextColor3 = CONFIG.COLORS.TEXT
+    searchBox.PlaceholderColor3 = Color3.fromRGB(180, 180, 190) -- Lighter placeholder text
     searchBox.ClearTextOnFocus = false
     searchBox.Parent = searchContainer
+    
+    -- Create clear button (X) that appears when text is entered
+    local clearButton = Instance.new("TextButton")
+    clearButton.BackgroundTransparency = 1
+    clearButton.Size = UDim2.new(0, 20, 0, 20)
+    clearButton.Position = UDim2.new(1, -25, 0.5, -10)
+    clearButton.Font = Enum.Font.GothamBold
+    clearButton.TextSize = CONFIG.TEXT_SIZE
+    clearButton.Text = "×" -- × symbol for clear
+    clearButton.TextColor3 = CONFIG.COLORS.TEXT
+    clearButton.Visible = false -- Only show when there's text
+    clearButton.Parent = searchContainer
+    
+    -- Show/hide clear button based on text content
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        clearButton.Visible = searchBox.Text ~= ""
+    end)
+    
+    -- Clear text when button is clicked
+    clearButton.MouseButton1Click:Connect(function()
+        searchBox.Text = ""
+    end)
+    
+    -- Visual feedback for hover and focus
+    local function updateVisualState()
+        if searchBox:IsFocused() then
+            -- Focused state
+            stroke.Color = CONFIG.COLORS.GRADIENT_END
+            stroke.Transparency = 0.5
+            searchIcon.TextTransparency = 0
+        else
+            -- Normal state
+            stroke.Color = CONFIG.COLORS.GRADIENT_START
+            stroke.Transparency = 0.7
+            searchIcon.TextTransparency = 0.3
+        end
+    end
+    
+    searchBox.Focused:Connect(updateVisualState)
+    searchBox.FocusLost:Connect(updateVisualState)
+    
+    -- Add subtle animation when focusing
+    searchBox.Focused:Connect(function()
+        -- Slight grow animation
+        local originalSize = searchContainer.Size
+        local originalPos = searchContainer.Position
+        
+        searchContainer:TweenSize(
+            UDim2.new(originalSize.X.Scale, originalSize.X.Offset + 4, 
+                      originalSize.Y.Scale, originalSize.Y.Offset + 2),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.1,
+            true
+        )
+        
+        searchContainer:TweenPosition(
+            UDim2.new(originalPos.X.Scale, originalPos.X.Offset - 2, 
+                      originalPos.Y.Scale, originalPos.Y.Offset - 1),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.1,
+            true
+        )
+    end)
+    
+    searchBox.FocusLost:Connect(function()
+        -- Return to original size
+        searchContainer:TweenSize(
+            size or UDim2.new(0.3, 0, 0, 30),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.1,
+            true
+        )
+        
+        searchContainer:TweenPosition(
+            position or UDim2.new(0, 0, 0, 0),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.1,
+            true
+        )
+    end)
     
     return searchContainer, searchBox
 end
@@ -234,13 +349,33 @@ function BisamConsole:Initialize()
         end)
     end
     
+    -- Create container for shadow effect
+    local frameContainer = Instance.new("Frame")
+    frameContainer.Name = "FrameContainer"
+    frameContainer.BackgroundTransparency = 1
+    frameContainer.Size = UDim2.new(0.6, 20, 0.6, 20) -- Slightly larger to accommodate shadow
+    frameContainer.Position = UDim2.new(0.2, -10, 0.2, -10)
+    frameContainer.Parent = gui
+    
+    -- Create shadow
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://1316045217" -- Soft shadow image
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.6
+    shadow.Size = UDim2.new(1, 0, 1, 0)
+    shadow.Position = UDim2.new(0, 0, 0, 0)
+    shadow.ZIndex = 0
+    shadow.Parent = frameContainer
+    
     -- Create main frame
     mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    mainFrame.Size = UDim2.new(0.6, 0, 0.6, 0)
-    mainFrame.Position = UDim2.new(0.2, 0, 0.2, 0)
-    mainFrame.Parent = gui
+    mainFrame.Size = UDim2.new(1, -20, 1, -20) -- Adjust for shadow
+    mainFrame.Position = UDim2.new(0, 10, 0, 10) -- Center in container
+    mainFrame.Parent = frameContainer
     createCorner(mainFrame)
     
     -- Add subtle gradient background for modern look
@@ -251,6 +386,14 @@ function BisamConsole:Initialize()
     })
     backgroundGradient.Rotation = 45
     backgroundGradient.Parent = mainFrame
+    
+    -- Add subtle inner stroke for depth
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(60, 60, 70)
+    stroke.Transparency = 0.7
+    stroke.Thickness = 1
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = mainFrame
     
     -- Create header
     self:CreateHeader()
@@ -281,6 +424,35 @@ function BisamConsole:CreateHeader()
     headerFrame.Parent = mainFrame
     createCorner(headerFrame)
     
+    -- Create a separate top border with gradient
+    local topBorder = Instance.new("Frame")
+    topBorder.Name = "TopBorder"
+    topBorder.BackgroundColor3 = CONFIG.COLORS.GRADIENT_START
+    topBorder.BorderSizePixel = 0
+    topBorder.Size = UDim2.new(1, 0, 0, 2)
+    topBorder.Position = UDim2.new(0, 0, 0, 0)
+    topBorder.ZIndex = headerFrame.ZIndex + 1
+    topBorder.Parent = headerFrame
+    
+    -- Add gradient to top border
+    local borderGradient = Instance.new("UIGradient")
+    borderGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, CONFIG.COLORS.GRADIENT_START),
+        ColorSequenceKeypoint.new(1, CONFIG.COLORS.GRADIENT_END)
+    })
+    borderGradient.Parent = topBorder
+    
+    -- Animate border gradient
+    task.spawn(function()
+        while headerFrame and headerFrame.Parent do
+            for i = 0, 1, 0.005 do
+                if not borderGradient or not borderGradient.Parent then break end
+                borderGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.03)
+            end
+        end
+    end)
+    
     -- Make only the top corners rounded
     local bottomFrame = Instance.new("Frame")
     bottomFrame.BackgroundColor3 = CONFIG.COLORS.HEADER
@@ -292,6 +464,8 @@ function BisamConsole:CreateHeader()
     -- Title with gradient
     local title, gradient = createGradientText(headerFrame, CONFIG.TITLE, UDim2.new(0.7, 0, 1, 0), UDim2.new(0, 10, 0, 0))
     title.TextXAlignment = Enum.TextXAlignment.Left
+    title.TextSize = CONFIG.TEXT_SIZE + 2 -- Slightly larger text
+    title.Font = Enum.Font.GothamBold -- Bold font for better visibility
     
     -- Animate gradient
     task.spawn(function()
@@ -304,15 +478,38 @@ function BisamConsole:CreateHeader()
         end
     end)
     
-    -- Close button
+    -- Close button with improved styling
     local closeButton = createButton(headerFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -40, 0.5, -15), function()
         gui:Destroy()
         gui = nil
     end)
+    closeButton.Font = Enum.Font.GothamBold
     
-    -- Minimize button
+    -- Add hover color change for close button
+    closeButton.MouseEnter:Connect(function()
+        closeButton.BackgroundColor3 = CONFIG.COLORS.ERROR
+        closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+    
+    closeButton.MouseLeave:Connect(function()
+        closeButton.BackgroundColor3 = CONFIG.COLORS.BUTTON
+        closeButton.TextColor3 = CONFIG.COLORS.TEXT
+    end)
+    
+    -- Minimize button with improved styling
     local minimizeButton = createButton(headerFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -80, 0.5, -15), function()
         self:MinimizeConsole()
+    end)
+    minimizeButton.Font = Enum.Font.GothamBold
+    minimizeButton.TextSize = CONFIG.TEXT_SIZE + 2
+    
+    -- Add hover color change for minimize button
+    minimizeButton.MouseEnter:Connect(function()
+        minimizeButton.BackgroundColor3 = CONFIG.COLORS.BUTTON_HOVER
+    end)
+    
+    minimizeButton.MouseLeave:Connect(function()
+        minimizeButton.BackgroundColor3 = CONFIG.COLORS.BUTTON
     end)
     
     -- Make header draggable
@@ -423,19 +620,60 @@ function BisamConsole:CreateControlButtons()
 end
 
 function BisamConsole:CreateToggleButton()
-    toggleButton = Instance.new("TextButton")
+    -- Create main toggle button container with improved styling
+    toggleButton = Instance.new("Frame")
     toggleButton.Name = "ToggleButton"
     toggleButton.Size = CONFIG.TOGGLE_SIZE
     toggleButton.Position = UDim2.new(0.9, 0, 0.9, 0)
     toggleButton.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
     toggleButton.Visible = false
     toggleButton.Parent = gui
-    createCorner(toggleButton, UDim.new(0, 8))
+    createCorner(toggleButton, UDim.new(0, 12)) -- More rounded corners
     
-    -- Gradient text
+    -- Add enhanced shadow effect for better depth perception
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://1316045217" -- Soft shadow image
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = CONFIG.TOGGLE_SHADOW_TRANSPARENCY
+    shadow.Size = UDim2.new(1, CONFIG.TOGGLE_SHADOW_SIZE * 2, 1, CONFIG.TOGGLE_SHADOW_SIZE * 2)
+    shadow.Position = UDim2.new(0, -CONFIG.TOGGLE_SHADOW_SIZE, 0, -CONFIG.TOGGLE_SHADOW_SIZE)
+    shadow.ZIndex = toggleButton.ZIndex - 1
+    shadow.Parent = toggleButton
+    
+    -- Add subtle inner stroke with gradient for depth
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = CONFIG.COLORS.GRADIENT_START
+    stroke.Transparency = 0.7
+    stroke.Thickness = 1
+    stroke.Parent = toggleButton
+    
+    -- Gradient text with improved styling
     local toggleText, gradient = createGradientText(toggleButton, CONFIG.TOGGLE_TEXT)
+    toggleText.TextSize = CONFIG.TEXT_SIZE + 2 -- Slightly larger text
+    toggleText.Font = Enum.Font.GothamBold -- Bold font for better visibility
     
-    -- Animate gradient
+    -- Clickable button (transparent overlay)
+    local button = Instance.new("TextButton")
+    button.Name = "ClickHandler"
+    button.Size = UDim2.new(1, 0, 1, 0)
+    button.BackgroundTransparency = 1
+    button.Text = ""
+    button.ZIndex = toggleButton.ZIndex + 1
+    button.Parent = toggleButton
+    
+    -- Visual feedback for touch/hover with improved animation
+    local hoverEffect = Instance.new("Frame")
+    hoverEffect.Name = "HoverEffect"
+    hoverEffect.Size = UDim2.new(1, 0, 1, 0)
+    hoverEffect.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    hoverEffect.BackgroundTransparency = 1 -- Start fully transparent
+    hoverEffect.ZIndex = toggleButton.ZIndex
+    hoverEffect.Parent = toggleButton
+    createCorner(hoverEffect, UDim.new(0, 12))
+    
+    -- Animate gradient with smoother animation
     task.spawn(function()
         while toggleButton and toggleButton.Parent do
             for i = 0, 1, 0.005 do
@@ -446,43 +684,214 @@ function BisamConsole:CreateToggleButton()
         end
     end)
     
-    -- Toggle functionality
-    toggleButton.MouseButton1Click:Connect(function()
-        self:MaximizeConsole()
+    -- Create drag indicator with improved visual feedback
+    local dragIndicator = Instance.new("Frame")
+    dragIndicator.Name = "DragIndicator"
+    dragIndicator.Size = UDim2.new(0.6, 0, 0, 0) -- Will be animated
+    dragIndicator.Position = UDim2.new(0.2, 0, 0.5, 0)
+    dragIndicator.AnchorPoint = Vector2.new(0, 0.5)
+    dragIndicator.BackgroundColor3 = CONFIG.COLORS.DRAG_INDICATOR -- Use new color from CONFIG
+    dragIndicator.BackgroundTransparency = 0.2
+    dragIndicator.BorderSizePixel = 0
+    dragIndicator.Visible = false
+    dragIndicator.Parent = toggleButton
+    createCorner(dragIndicator, UDim.new(1, 0)) -- Fully rounded
+    
+    -- Create hold progress indicator with improved styling
+    local holdIndicator = Instance.new("Frame")
+    holdIndicator.Name = "HoldIndicator"
+    holdIndicator.Size = UDim2.new(0, 0, 0, 4) -- Slightly thicker
+    holdIndicator.Position = UDim2.new(0, 0, 1, -4)
+    holdIndicator.BackgroundColor3 = CONFIG.COLORS.GRADIENT_END
+    holdIndicator.BorderSizePixel = 0
+    holdIndicator.Visible = false
+    holdIndicator.Parent = toggleButton
+    createCorner(holdIndicator, UDim.new(0, 2)) -- Slightly rounded corners
+    
+    -- Add glow effect for active state
+    local glowEffect = Instance.new("ImageLabel")
+    glowEffect.Name = "GlowEffect"
+    glowEffect.BackgroundTransparency = 1
+    glowEffect.Image = "rbxassetid://1316045217" -- Same soft glow image
+    glowEffect.ImageColor3 = CONFIG.COLORS.GLOW_EFFECT -- Use new color from CONFIG
+    glowEffect.ImageTransparency = 1 -- Start invisible
+    glowEffect.Size = UDim2.new(1, 20, 1, 20)
+    glowEffect.Position = UDim2.new(0, -10, 0, -10)
+    glowEffect.ZIndex = toggleButton.ZIndex - 1
+    glowEffect.Parent = toggleButton
+    
+    -- Toggle functionality for PC
+    button.MouseButton1Click:Connect(function()
+        if not isDragging then -- Only toggle if not dragging
+            self:MaximizeConsole()
+        end
     end)
     
-    -- Mobile drag functionality
-    toggleButton.InputBegan:Connect(function(input)
+    -- Hover effect for PC with smoother animation
+    button.MouseEnter:Connect(function()
+        -- Animate hover effect with CONFIG animation time
+         hoverEffect:TweenBackgroundTransparency(
+             0.8, -- Target transparency
+             Enum.EasingDirection.Out,
+             Enum.EasingStyle.Quad,
+             CONFIG.ANIMATION_TIME, -- Use CONFIG animation time
+             true -- Override
+         )
+    end)
+    
+    button.MouseLeave:Connect(function()
+         -- Animate hover effect out with CONFIG animation time
+         hoverEffect:TweenBackgroundTransparency(
+             1, -- Target transparency
+             Enum.EasingDirection.Out,
+             Enum.EasingStyle.Quad,
+             CONFIG.ANIMATION_TIME, -- Use CONFIG animation time
+             true -- Override
+         )
+     end)
+    
+    -- Enhanced mobile touch functionality with 0.5s hold time
+    local HOLD_TIME = 0.5 -- Exactly 0.5 seconds as requested
+    
+    button.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             holdStartTime = tick()
             dragStartPosition = input.Position
             dragStartOffset = toggleButton.Position
+            
+            -- Show and animate hold indicator
+            holdIndicator.Visible = true
+            holdIndicator.Size = UDim2.new(0, 0, 0, 4)
+            
+            -- Animate hold indicator with smooth progress
+            task.spawn(function()
+                local startTime = tick()
+                while holdStartTime and tick() - startTime < HOLD_TIME do
+                    local progress = (tick() - startTime) / HOLD_TIME
+                    holdIndicator:TweenSize(
+                        UDim2.new(progress, 0, 0, 4),
+                        Enum.EasingDirection.Out,
+                        Enum.EasingStyle.Linear,
+                        0.03,
+                        true
+                    )
+                    task.wait(0.03)
+                end
+                
+                -- If still holding after time elapsed, show drag indicator
+                if holdStartTime and tick() - startTime >= HOLD_TIME then
+                    holdIndicator.Visible = false
+                    dragIndicator.Visible = true
+                    
+                    -- Animate drag indicator appearance
+                    dragIndicator:TweenSize(
+                        UDim2.new(0.6, 0, 0, 6),
+                        Enum.EasingDirection.Out,
+                        Enum.EasingStyle.Back,
+                        0.2,
+                        true
+                    )
+                    
+                    -- Pulse glow effect to indicate drag mode with CONFIG animation time
+                     glowEffect:TweenImageTransparency(
+                         0.7, -- Semi-transparent
+                         Enum.EasingDirection.Out,
+                         Enum.EasingStyle.Quad,
+                         CONFIG.ANIMATION_TIME,
+                         true
+                     )
+                end
+            end)
         end
     end)
     
-    toggleButton.InputEnded:Connect(function(input)
+    button.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             local holdDuration = tick() - (holdStartTime or 0)
+            local wasHolding = holdStartTime ~= nil
             holdStartTime = nil
             
-            if holdDuration < CONFIG.MOBILE_HOLD_TIME then
+            -- Hide indicators
+            holdIndicator.Visible = false
+            dragIndicator.Visible = false
+            
+            -- Hide glow effect with CONFIG animation time
+             glowEffect:TweenImageTransparency(
+                 1, -- Fully transparent
+                 Enum.EasingDirection.Out,
+                 Enum.EasingStyle.Quad,
+                 CONFIG.ANIMATION_TIME,
+                 true
+             )
+            
+            if wasHolding and holdDuration < HOLD_TIME then
                 -- Short tap, toggle console
                 if not isDragging then
                     self:MaximizeConsole()
                 end
             end
             
+            -- Add enhanced animation when releasing drag
+            if isDragging then
+                -- Snap to grid effect with improved positioning
+                local posX = toggleButton.Position.X.Scale
+                local posY = toggleButton.Position.Y.Scale
+                
+                -- Snap to edges if close with better edge detection using CONFIG threshold
+                local threshold = CONFIG.SNAP_TO_EDGE_THRESHOLD
+                if posX < threshold then posX = 0.02 end
+                if posX > (1 - threshold) then posX = 0.98 end
+                if posY < threshold then posY = 0.02 end
+                if posY > (1 - threshold) then posY = 0.98 end
+                
+                -- Animate to snapped position with smoother animation using CONFIG speed
+                toggleButton:TweenPosition(
+                    UDim2.new(posX, 0, posY, 0),
+                    Enum.EasingDirection.Out,
+                    Enum.EasingStyle.Back, -- Bouncy effect
+                    CONFIG.DRAG_ANIMATION_SPEED, -- Use CONFIG animation speed
+                    true -- Override
+                )
+                
+                -- Add subtle scale effect when releasing with CONFIG animation time
+                 local originalSize = toggleButton.Size
+                 toggleButton:TweenSize(
+                     UDim2.new(originalSize.X.Scale * 1.1, originalSize.X.Offset, 
+                               originalSize.Y.Scale * 1.1, originalSize.Y.Offset),
+                     Enum.EasingDirection.Out,
+                     Enum.EasingStyle.Quad,
+                     CONFIG.ANIMATION_TIME / 2, -- Half animation time for quick grow
+                     true,
+                     function()
+                         toggleButton:TweenSize(
+                             originalSize,
+                             Enum.EasingDirection.Out,
+                             Enum.EasingStyle.Back,
+                             CONFIG.ANIMATION_TIME, -- Full animation time for bounce back
+                             true
+                         )
+                     end
+                 )
+            end
+            
             isDragging = false
         end
     end)
     
-    toggleButton.InputChanged:Connect(function(input)
+    button.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch and holdStartTime then
             local holdDuration = tick() - holdStartTime
             
-            if holdDuration >= CONFIG.MOBILE_HOLD_TIME then
-                -- Long hold, enable dragging
+            if holdDuration >= HOLD_TIME then
+                -- Long hold (0.5s), enable dragging
                 isDragging = true
+                
+                -- Add visual feedback for active dragging with CONFIG intensity
+                if CONFIG.MOBILE_DRAG_FEEDBACK then
+                    hoverEffect.BackgroundTransparency = 1 - CONFIG.TOUCH_FEEDBACK_INTENSITY
+                end
+                
+                -- Calculate delta and apply with smooth movement
                 local delta = input.Position - dragStartPosition
                 toggleButton.Position = UDim2.new(
                     dragStartOffset.X.Scale, dragStartOffset.X.Offset + delta.X,
@@ -496,85 +905,290 @@ function BisamConsole:CreateToggleButton()
 end
 
 function BisamConsole:CreateFilterMenu()
+    -- Create container for shadow effect
+    local menuContainer = Instance.new("Frame")
+    menuContainer.Name = "FilterMenuContainer"
+    menuContainer.BackgroundTransparency = 1
+    menuContainer.Size = UDim2.new(0, 240, 0, 295)  -- Larger to accommodate shadow
+    menuContainer.Position = UDim2.new(0.5, -120, 0.5, -147)  -- Centered
+    menuContainer.Visible = false
+    menuContainer.Parent = gui
+    
+    -- Create shadow
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://1316045217" -- Soft shadow image
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.6
+    shadow.Size = UDim2.new(1, 0, 1, 0)
+    shadow.Position = UDim2.new(0, 0, 0, 0)
+    shadow.ZIndex = 0
+    shadow.Parent = menuContainer
+    
+    -- Create main filter menu frame
     filterMenu = Instance.new("Frame")
     filterMenu.Name = "FilterMenu"
     filterMenu.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    filterMenu.Size = UDim2.new(0, 200, 0, 255)  -- Increased height for the new Info option
-    filterMenu.Position = UDim2.new(0.5, -100, 0.5, -127)  -- Adjusted position to keep it centered
-    filterMenu.Visible = false
-    filterMenu.Parent = gui
-    createCorner(filterMenu)
+    filterMenu.Size = UDim2.new(1, -20, 1, -20)  -- Adjust for shadow
+    filterMenu.Position = UDim2.new(0, 10, 0, 10)  -- Center in container
+    filterMenu.Parent = menuContainer
+    createCorner(filterMenu, UDim.new(0, 10))  -- More rounded corners
     
-    -- Title
-    local title = Instance.new("TextLabel")
-    title.BackgroundTransparency = 1
-    title.Size = UDim2.new(1, 0, 0, 30)
-    title.Font = CONFIG.FONT
-    title.TextSize = CONFIG.TEXT_SIZE
-    title.Text = "Filter Options"
-    title.TextColor3 = CONFIG.COLORS.TEXT
-    title.Parent = filterMenu
+    -- Add subtle inner stroke for depth
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = CONFIG.COLORS.GRADIENT_START
+    stroke.Transparency = 0.7
+    stroke.Thickness = 1
+    stroke.Parent = filterMenu
     
-    -- Options container
-    local optionsFrame = Instance.new("Frame")
+    -- Create a top border with gradient (similar to header)
+    local topBorder = Instance.new("Frame")
+    topBorder.Name = "TopBorder"
+    topBorder.BackgroundColor3 = CONFIG.COLORS.GRADIENT_START
+    topBorder.BorderSizePixel = 0
+    topBorder.Size = UDim2.new(1, 0, 0, 2)
+    topBorder.Position = UDim2.new(0, 0, 0, 0)
+    topBorder.ZIndex = filterMenu.ZIndex + 1
+    topBorder.Parent = filterMenu
+    
+    -- Add gradient to top border
+    local borderGradient = Instance.new("UIGradient")
+    borderGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, CONFIG.COLORS.GRADIENT_START),
+        ColorSequenceKeypoint.new(1, CONFIG.COLORS.GRADIENT_END)
+    })
+    borderGradient.Parent = topBorder
+    
+    -- Animate border gradient
+    task.spawn(function()
+        while filterMenu and filterMenu.Parent do
+            for i = 0, 1, 0.005 do
+                if not borderGradient or not borderGradient.Parent then break end
+                borderGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.03)
+            end
+        end
+    end)
+    
+    -- Title with gradient
+    local titleContainer = Instance.new("Frame")
+    titleContainer.BackgroundTransparency = 1
+    titleContainer.Size = UDim2.new(1, 0, 0, 40)
+    titleContainer.Parent = filterMenu
+    
+    local title, titleGradient = createGradientText(titleContainer, "Filter Options")
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = CONFIG.TEXT_SIZE + 2
+    
+    -- Options container with scrolling for mobile
+    local optionsContainer = Instance.new("Frame")
+    optionsContainer.BackgroundTransparency = 1
+    optionsContainer.Size = UDim2.new(1, 0, 0, 185)  -- Increased height
+    optionsContainer.Position = UDim2.new(0, 0, 0, 40)
+    optionsContainer.Parent = filterMenu
+    
+    local optionsFrame = Instance.new("ScrollingFrame")
     optionsFrame.BackgroundTransparency = 1
-    optionsFrame.Size = UDim2.new(1, 0, 0, 175)  -- Increased height for the new Info option
-    optionsFrame.Position = UDim2.new(0, 0, 0, 30)
-    optionsFrame.Parent = filterMenu
+    optionsFrame.Size = UDim2.new(1, 0, 1, 0)
+    optionsFrame.CanvasSize = UDim2.new(0, 0, 0, 185)  -- Match container height initially
+    optionsFrame.ScrollBarThickness = 4
+    optionsFrame.ScrollBarImageColor3 = CONFIG.COLORS.GRADIENT_END
+    optionsFrame.Parent = optionsContainer
     createPadding(optionsFrame)
     
-    -- Filter options
-    local errorOption, errorCircle = createFilterOption(optionsFrame, "Error Messages", filters.error, UDim2.new(0, 0, 0, 0), function(enabled)
+    -- Add layout for options
+    local optionsLayout = Instance.new("UIListLayout")
+    optionsLayout.Padding = UDim.new(0, 12)  -- More spacing between options
+    optionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    optionsLayout.Parent = optionsFrame
+    
+    -- Filter options with improved styling
+    local function createEnhancedFilterOption(text, enabled, icon, color, callback)
+        local option = Instance.new("Frame")
+        option.BackgroundColor3 = Color3.fromRGB(45, 45, 55)  -- Slightly lighter than background
+        option.Size = UDim2.new(1, 0, 0, 40)  -- Taller for better touch targets
+        option.Parent = optionsFrame
+        createCorner(option, UDim.new(0, 6))
+        
+        -- Indicator circle
+        local circle = Instance.new("Frame")
+        circle.Size = UDim2.new(0, 20, 0, 20)
+        circle.Position = UDim2.new(0, 10, 0.5, -10)
+        circle.BackgroundColor3 = enabled and CONFIG.COLORS.FILTER_ENABLED or CONFIG.COLORS.FILTER_DISABLED
+        circle.Parent = option
+        createCorner(circle, UDim.new(1, 0))  -- Perfect circle
+        
+        -- Icon indicator (optional)
+        if icon then
+            local iconLabel = Instance.new("TextLabel")
+            iconLabel.BackgroundTransparency = 1
+            iconLabel.Size = UDim2.new(0, 20, 0, 20)
+            iconLabel.Position = UDim2.new(0, 10, 0.5, -10)
+            iconLabel.Font = Enum.Font.GothamBold
+            iconLabel.TextSize = 14
+            iconLabel.Text = icon
+            iconLabel.TextColor3 = CONFIG.COLORS.BACKGROUND
+            iconLabel.ZIndex = circle.ZIndex + 1
+            iconLabel.Parent = option
+        end
+        
+        -- Label
+        local label = Instance.new("TextLabel")
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, -50, 1, 0)
+        label.Position = UDim2.new(0, 40, 0, 0)
+        label.Font = CONFIG.FONT
+        label.TextSize = CONFIG.TEXT_SIZE
+        label.Text = text
+        label.TextColor3 = CONFIG.COLORS.TEXT
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = option
+        
+        -- Color indicator
+        if color then
+            local colorIndicator = Instance.new("Frame")
+            colorIndicator.Size = UDim2.new(0, 4, 0.6, 0)
+            colorIndicator.Position = UDim2.new(1, -14, 0.2, 0)
+            colorIndicator.BackgroundColor3 = color
+            colorIndicator.BorderSizePixel = 0
+            colorIndicator.Parent = option
+            createCorner(colorIndicator, UDim.new(0, 2))
+        end
+        
+        -- Button overlay
+        local button = Instance.new("TextButton")
+        button.BackgroundTransparency = 1
+        button.Size = UDim2.new(1, 0, 1, 0)
+        button.Text = ""
+        button.Parent = option
+        
+        -- Hover effect
+        button.MouseEnter:Connect(function()
+            option.BackgroundColor3 = Color3.fromRGB(55, 55, 65)  -- Lighter on hover
+        end)
+        
+        button.MouseLeave:Connect(function()
+            option.BackgroundColor3 = Color3.fromRGB(45, 45, 55)  -- Back to normal
+        end)
+        
+        if callback then
+            button.MouseButton1Click:Connect(function()
+                local newState = not enabled
+                enabled = newState
+                circle.BackgroundColor3 = enabled and CONFIG.COLORS.FILTER_ENABLED or CONFIG.COLORS.FILTER_DISABLED
+                callback(newState)
+                
+                -- Add click animation
+                local clickEffect = Instance.new("Frame")
+                clickEffect.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                clickEffect.BackgroundTransparency = 0.8
+                clickEffect.Size = UDim2.new(1, 0, 1, 0)
+                clickEffect.Parent = option
+                createCorner(clickEffect, UDim.new(0, 6))
+                
+                -- Fade out animation
+                task.spawn(function()
+                    for i = 0.8, 1, 0.1 do
+                        if not clickEffect or not clickEffect.Parent then break end
+                        clickEffect.BackgroundTransparency = i
+                        task.wait(0.01)
+                    end
+                    if clickEffect and clickEffect.Parent then
+                        clickEffect:Destroy()
+                    end
+                end)
+            end)
+        end
+        
+        return option, circle, enabled
+    end
+    
+    -- Create filter options with icons and color indicators
+    local errorOption = createEnhancedFilterOption("Error Messages", filters.error, "!", CONFIG.COLORS.ERROR, function(enabled)
         filters.error = enabled
         self:ApplyFilters()
     end)
     
-    local outputOption, outputCircle = createFilterOption(optionsFrame, "Output Messages", filters.output, UDim2.new(0, 0, 0, 35), function(enabled)
+    local outputOption = createEnhancedFilterOption("Output Messages", filters.output, "O", CONFIG.COLORS.TEXT, function(enabled)
         filters.output = enabled
         self:ApplyFilters()
     end)
     
-    local warningOption, warningCircle = createFilterOption(optionsFrame, "Warning Messages", filters.warning, UDim2.new(0, 0, 0, 70), function(enabled)
+    local warningOption = createEnhancedFilterOption("Warning Messages", filters.warning, "⚠", CONFIG.COLORS.WARNING, function(enabled)
         filters.warning = enabled
         self:ApplyFilters()
     end)
     
-    local infoOption, infoCircle = createFilterOption(optionsFrame, "Info Messages", filters.info, UDim2.new(0, 0, 0, 105), function(enabled)
+    local infoOption = createEnhancedFilterOption("Info Messages", filters.info, "i", CONFIG.COLORS.INFO, function(enabled)
         filters.info = enabled
         self:ApplyFilters()
     end)
     
-    local timestampOption, timestampCircle = createFilterOption(optionsFrame, "Show Timestamps", filters.timestamp, UDim2.new(0, 0, 0, 140), function(enabled)
+    local timestampOption = createEnhancedFilterOption("Show Timestamps", filters.timestamp, "⏱", CONFIG.COLORS.TIMESTAMP, function(enabled)
         filters.timestamp = enabled
         self:ApplyFilters()
     end)
     
-    -- Buttons
+    -- Update canvas size based on content
+    optionsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        optionsFrame.CanvasSize = UDim2.new(0, 0, 0, optionsLayout.AbsoluteContentSize.Y + 20)
+    end)
+    
+    -- Buttons container
     local buttonFrame = Instance.new("Frame")
     buttonFrame.BackgroundTransparency = 1
-    buttonFrame.Size = UDim2.new(1, 0, 0, 40)
+    buttonFrame.Size = UDim2.new(1, 0, 0, 50)
     buttonFrame.Position = UDim2.new(0, 0, 1, -50)
     buttonFrame.Parent = filterMenu
     
-    local closeButton = createButton(buttonFrame, "Close", UDim2.new(0, 100, 0, 30), UDim2.new(0.5, -50, 0.5, -15), function()
-        filterMenu.Visible = false
+    -- Close button with improved styling
+    local closeButton = createButton(buttonFrame, "Close", UDim2.new(0, 120, 0, 36), UDim2.new(0.5, -60, 0.5, -18), function()
+        -- Animate closing
+        task.spawn(function()
+            for i = 1, 0, -0.1 do
+                if not menuContainer or not menuContainer.Parent then break end
+                menuContainer.BackgroundTransparency = i
+                task.wait(0.01)
+            end
+            menuContainer.Visible = false
+            
+            -- Also hide close detector
+            local closeDetector = gui:FindFirstChild("CloseDetector")
+            if closeDetector then
+                closeDetector.Visible = false
+            end
+        end)
     end)
+    closeButton.Font = Enum.Font.GothamSemibold
     
     -- Close when clicking outside
     local closeDetector = Instance.new("TextButton")
+    closeDetector.Name = "CloseDetector"
     closeDetector.BackgroundTransparency = 1
     closeDetector.Size = UDim2.new(1, 0, 1, 0)
     closeDetector.Text = ""
-    closeDetector.ZIndex = -1
+    closeDetector.ZIndex = menuContainer.ZIndex - 1
     closeDetector.Parent = gui
     closeDetector.Visible = false
     
     closeDetector.MouseButton1Click:Connect(function()
-        filterMenu.Visible = false
-        closeDetector.Visible = false
+        -- Animate closing
+        task.spawn(function()
+            for i = 1, 0, -0.1 do
+                if not menuContainer or not menuContainer.Parent then break end
+                menuContainer.BackgroundTransparency = i
+                task.wait(0.01)
+            end
+            menuContainer.Visible = false
+            closeDetector.Visible = false
+        end)
     end)
     
-    return filterMenu
+    -- Store reference to container for animations
+    filterMenu.Parent.Visible = false
+    
+    return menuContainer
 end
 
 function BisamConsole:ConnectLogService()
@@ -720,24 +1334,228 @@ function BisamConsole:AddConsoleMessage(message, messageType)
 end
 
 function BisamConsole:MinimizeConsole()
-    mainFrame.Visible = false
-    toggleButton.Visible = true
+    -- Save current position for animation
+    local startPos = mainFrame.Position
+    local startSize = mainFrame.Size
+    
+    -- Animate minimizing
+    local targetPos = UDim2.new(toggleButton.Position.X.Scale, toggleButton.Position.X.Offset, 
+                               toggleButton.Position.Y.Scale, toggleButton.Position.Y.Offset)
+    local targetSize = UDim2.new(0, 0, 0, 0)
+    
+    -- Store original transparency values
+    local originalTransparencies = {}
+    for _, child in pairs(mainFrame:GetDescendants()) do
+        if child:IsA("GuiObject") and child.BackgroundTransparency < 1 then
+            originalTransparencies[child] = child.BackgroundTransparency
+            child.BackgroundTransparency = math.min(child.BackgroundTransparency + 0.2, 1)
+        end
+    end
+    
+    -- Animate
+    task.spawn(function()
+        local startTime = tick()
+        local duration = CONFIG.ANIMATION_TIME
+        
+        while tick() - startTime < duration do
+            local alpha = (tick() - startTime) / duration
+            local easedAlpha = 1 - (1 - alpha) * (1 - alpha) -- Ease out quad
+            
+            -- Animate size and position
+            mainFrame.Size = UDim2.new(
+                startSize.X.Scale + (targetSize.X.Scale - startSize.X.Scale) * easedAlpha,
+                startSize.X.Offset + (targetSize.X.Offset - startSize.X.Offset) * easedAlpha,
+                startSize.Y.Scale + (targetSize.Y.Scale - startSize.Y.Scale) * easedAlpha,
+                startSize.Y.Offset + (targetSize.Y.Offset - startSize.Y.Offset) * easedAlpha
+            )
+            
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale + (targetPos.X.Scale - startPos.X.Scale) * easedAlpha,
+                startPos.X.Offset + (targetPos.X.Offset - startPos.X.Offset) * easedAlpha,
+                startPos.Y.Scale + (targetPos.Y.Scale - startPos.Y.Scale) * easedAlpha,
+                startPos.Y.Offset + (targetPos.Y.Offset - startPos.Y.Offset) * easedAlpha
+            )
+            
+            task.wait()
+        end
+        
+        -- Finish animation
+        mainFrame.Visible = false
+        mainFrame.Size = startSize
+        mainFrame.Position = startPos
+        
+        -- Restore original transparency values
+        for obj, transparency in pairs(originalTransparencies) do
+            if obj and obj.Parent then
+                obj.BackgroundTransparency = transparency
+            end
+        end
+        
+        -- Show toggle button with a fade-in effect
+        toggleButton.BackgroundTransparency = 1
+        toggleButton.Visible = true
+        
+        -- Fade in toggle button
+        for i = 1, 0, -0.1 do
+            if not toggleButton or not toggleButton.Parent then break end
+            toggleButton.BackgroundTransparency = i
+            task.wait(0.01)
+        end
+        toggleButton.BackgroundTransparency = 0
+    end)
 end
 
 function BisamConsole:MaximizeConsole()
+    -- Save toggle button position for animation
+    local startPos = toggleButton.Position
+    
+    -- Prepare main frame for animation
+    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    mainFrame.Position = startPos
     mainFrame.Visible = true
-    toggleButton.Visible = false
+    
+    -- Target size and position
+    local targetSize = UDim2.new(0.6, 0, 0.7, 0)
+    local targetPos = UDim2.new(0.5, -targetSize.X.Offset/2, 0.5, -targetSize.Y.Offset/2)
+    
+    -- Apply initial transparency
+    local originalTransparencies = {}
+    for _, child in pairs(mainFrame:GetDescendants()) do
+        if child:IsA("GuiObject") and child.BackgroundTransparency < 1 then
+            originalTransparencies[child] = child.BackgroundTransparency
+            child.BackgroundTransparency = math.min(child.BackgroundTransparency + 0.5, 1)
+        end
+    end
+    
+    -- Hide toggle button with fade out
+    task.spawn(function()
+        for i = 0, 1, 0.2 do
+            if not toggleButton or not toggleButton.Parent then break end
+            toggleButton.BackgroundTransparency = i
+            task.wait(0.01)
+        end
+        toggleButton.Visible = false
+        toggleButton.BackgroundTransparency = 0
+    end)
+    
+    -- Animate main frame
+    task.spawn(function()
+        local startTime = tick()
+        local duration = CONFIG.ANIMATION_TIME
+        
+        while tick() - startTime < duration do
+            local alpha = (tick() - startTime) / duration
+            local easedAlpha = alpha * (2 - alpha) -- Ease out quad
+            
+            -- Animate size and position
+            mainFrame.Size = UDim2.new(
+                targetSize.X.Scale * easedAlpha,
+                targetSize.X.Offset * easedAlpha,
+                targetSize.Y.Scale * easedAlpha,
+                targetSize.Y.Offset * easedAlpha
+            )
+            
+            -- Adjust position to keep centered
+            mainFrame.Position = UDim2.new(
+                0.5, -(mainFrame.Size.X.Offset * 0.5),
+                0.5, -(mainFrame.Size.Y.Offset * 0.5)
+            )
+            
+            task.wait()
+        end
+        
+        -- Finish animation
+        mainFrame.Size = targetSize
+        mainFrame.Position = targetPos
+        
+        -- Restore original transparency values with animation
+        for obj, transparency in pairs(originalTransparencies) do
+            if obj and obj.Parent then
+                task.spawn(function()
+                    for i = obj.BackgroundTransparency, transparency, -0.1 do
+                        if not obj or not obj.Parent then break end
+                        obj.BackgroundTransparency = math.max(i, transparency)
+                        task.wait(0.01)
+                    end
+                    obj.BackgroundTransparency = transparency
+                end)
+            end
+        end
+    end)
 end
 
 function BisamConsole:ToggleFilterMenu()
-    filterMenu.Visible = not filterMenu.Visible
-    
-    -- Show/hide click detector
-    local closeDetector = gui:FindFirstChild("TextButton")
-    if closeDetector then
-        closeDetector.Visible = filterMenu.Visible
-        if filterMenu.Visible then
-            closeDetector.ZIndex = filterMenu.ZIndex - 1
+    if filterMenu and filterMenu.Parent then
+        local menuContainer = filterMenu.Parent
+        local closeDetector = gui:FindFirstChild("CloseDetector")
+        
+        if not menuContainer.Visible then
+            -- Show filter menu with animation
+            menuContainer.Visible = true
+            menuContainer.BackgroundTransparency = 1
+            
+            -- Position menu relative to toggle button if it exists
+            if toggleButton and toggleButton.Parent then
+                local togglePos = toggleButton.AbsolutePosition
+                local toggleSize = toggleButton.AbsoluteSize
+                
+                -- Calculate position to appear near toggle button
+                local screenSize = gui.AbsoluteSize
+                local menuSize = menuContainer.AbsoluteSize
+                
+                -- Determine best position (avoid going off screen)
+                local xPos = math.clamp(togglePos.X + toggleSize.X/2 - menuSize.X/2, 
+                                       10, screenSize.X - menuSize.X - 10)
+                local yPos = math.clamp(togglePos.Y - menuSize.Y - 10,
+                                       10, screenSize.Y - menuSize.Y - 10)
+                
+                -- If menu would appear above screen, position it below toggle instead
+                if yPos < 10 then
+                    yPos = togglePos.Y + toggleSize.Y + 10
+                end
+                
+                menuContainer.Position = UDim2.new(0, xPos, 0, yPos)
+            end
+            
+            -- Show close detector
+            if closeDetector then
+                closeDetector.Visible = true
+            end
+            
+            -- Animate opening
+            task.spawn(function()
+                -- Scale animation
+                menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X * 0.9, 0, menuContainer.AbsoluteSize.Y * 0.9)
+                
+                -- Fade in animation
+                for i = 1, 10 do
+                    if not menuContainer or not menuContainer.Parent then break end
+                    menuContainer.BackgroundTransparency = 1 - (i/10)
+                    menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X + (menuContainer.AbsoluteSize.X * 0.01), 
+                                                 0, menuContainer.AbsoluteSize.Y + (menuContainer.AbsoluteSize.Y * 0.01))
+                    task.wait(0.01)
+                end
+                
+                -- Ensure final size
+                menuContainer.Size = UDim2.new(0, 240, 0, 295)
+            end)
+        else
+            -- Hide with animation
+            task.spawn(function()
+                for i = 1, 10 do
+                    if not menuContainer or not menuContainer.Parent then break end
+                    menuContainer.BackgroundTransparency = i/10
+                    menuContainer.Size = UDim2.new(0, menuContainer.AbsoluteSize.X - (menuContainer.AbsoluteSize.X * 0.01), 
+                                                 0, menuContainer.AbsoluteSize.Y - (menuContainer.AbsoluteSize.Y * 0.01))
+                    task.wait(0.01)
+                end
+                menuContainer.Visible = false
+                
+                -- Hide close detector
+                if closeDetector then
+                    closeDetector.Visible = false
+                end
+            end)
         end
     end
 end
