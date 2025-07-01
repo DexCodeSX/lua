@@ -349,32 +349,20 @@ function BisamConsole:Initialize()
         end)
     end
     
-    -- Create container for shadow effect
+    -- Create container for main frame (without shadow)
     local frameContainer = Instance.new("Frame")
     frameContainer.Name = "FrameContainer"
     frameContainer.BackgroundTransparency = 1
-    frameContainer.Size = UDim2.new(0.6, 20, 0.6, 20) -- Slightly larger to accommodate shadow
-    frameContainer.Position = UDim2.new(0.2, -10, 0.2, -10)
+    frameContainer.Size = UDim2.new(0.6, 0, 0.6, 0) -- No extra padding needed
+    frameContainer.Position = UDim2.new(0.2, 0, 0.2, 0)
     frameContainer.Parent = gui
-    
-    -- Create shadow
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://1316045217" -- Soft shadow image
-    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.ImageTransparency = 0.6
-    shadow.Size = UDim2.new(1, 0, 1, 0)
-    shadow.Position = UDim2.new(0, 0, 0, 0)
-    shadow.ZIndex = 0
-    shadow.Parent = frameContainer
     
     -- Create main frame
     mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    mainFrame.Size = UDim2.new(1, -20, 1, -20) -- Adjust for shadow
-    mainFrame.Position = UDim2.new(0, 10, 0, 10) -- Center in container
+    mainFrame.Size = UDim2.new(1, 0, 1, 0) -- Full size of container
+    mainFrame.Position = UDim2.new(0, 0, 0, 0) -- No offset needed
     mainFrame.Parent = frameContainer
     createCorner(mainFrame)
     
@@ -730,25 +718,21 @@ function BisamConsole:CreateToggleButton()
     -- Hover effect for PC with smoother animation
     button.MouseEnter:Connect(function()
         -- Animate hover effect with CONFIG animation time
-         hoverEffect:TweenBackgroundTransparency(
-             0.8, -- Target transparency
-             Enum.EasingDirection.Out,
-             Enum.EasingStyle.Quad,
-             CONFIG.ANIMATION_TIME, -- Use CONFIG animation time
-             true -- Override
-         )
+        game:GetService("TweenService"):Create(
+            hoverEffect,
+            TweenInfo.new(CONFIG.ANIMATION_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundTransparency = 0.8}
+        ):Play()
     end)
     
     button.MouseLeave:Connect(function()
-         -- Animate hover effect out with CONFIG animation time
-         hoverEffect:TweenBackgroundTransparency(
-             1, -- Target transparency
-             Enum.EasingDirection.Out,
-             Enum.EasingStyle.Quad,
-             CONFIG.ANIMATION_TIME, -- Use CONFIG animation time
-             true -- Override
-         )
-     end)
+        -- Animate hover effect out with CONFIG animation time
+        game:GetService("TweenService"):Create(
+            hoverEffect,
+            TweenInfo.new(CONFIG.ANIMATION_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundTransparency = 1}
+        ):Play()
+    end)
     
     -- Enhanced mobile touch functionality with 0.5s hold time
     local HOLD_TIME = 0.5 -- Exactly 0.5 seconds as requested
@@ -758,6 +742,7 @@ function BisamConsole:CreateToggleButton()
             holdStartTime = tick()
             dragStartPosition = input.Position
             dragStartOffset = toggleButton.Position
+            isDragging = false -- Reset dragging state on new touch
             
             -- Show and animate hold indicator
             holdIndicator.Visible = true
@@ -768,13 +753,12 @@ function BisamConsole:CreateToggleButton()
                 local startTime = tick()
                 while holdStartTime and tick() - startTime < HOLD_TIME do
                     local progress = (tick() - startTime) / HOLD_TIME
-                    holdIndicator:TweenSize(
-                        UDim2.new(progress, 0, 0, 4),
-                        Enum.EasingDirection.Out,
-                        Enum.EasingStyle.Linear,
-                        0.03,
-                        true
-                    )
+                    -- Use TweenService instead of custom method
+                    game:GetService("TweenService"):Create(
+                        holdIndicator,
+                        TweenInfo.new(0.03, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+                        {Size = UDim2.new(progress, 0, 0, 4)}
+                    ):Play()
                     task.wait(0.03)
                 end
                 
@@ -784,22 +768,18 @@ function BisamConsole:CreateToggleButton()
                     dragIndicator.Visible = true
                     
                     -- Animate drag indicator appearance
-                    dragIndicator:TweenSize(
-                        UDim2.new(0.6, 0, 0, 6),
-                        Enum.EasingDirection.Out,
-                        Enum.EasingStyle.Back,
-                        0.2,
-                        true
-                    )
+                    game:GetService("TweenService"):Create(
+                        dragIndicator,
+                        TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                        {Size = UDim2.new(0.6, 0, 0, 6)}
+                    ):Play()
                     
                     -- Pulse glow effect to indicate drag mode with CONFIG animation time
-                     glowEffect:TweenImageTransparency(
-                         0.7, -- Semi-transparent
-                         Enum.EasingDirection.Out,
-                         Enum.EasingStyle.Quad,
-                         CONFIG.ANIMATION_TIME,
-                         true
-                     )
+                    game:GetService("TweenService"):Create(
+                        glowEffect,
+                        TweenInfo.new(CONFIG.ANIMATION_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                        {ImageTransparency = 0.7} -- Semi-transparent
+                    ):Play()
                 end
             end)
         end
@@ -816,13 +796,11 @@ function BisamConsole:CreateToggleButton()
             dragIndicator.Visible = false
             
             -- Hide glow effect with CONFIG animation time
-             glowEffect:TweenImageTransparency(
-                 1, -- Fully transparent
-                 Enum.EasingDirection.Out,
-                 Enum.EasingStyle.Quad,
-                 CONFIG.ANIMATION_TIME,
-                 true
-             )
+            game:GetService("TweenService"):Create(
+                glowEffect,
+                TweenInfo.new(CONFIG.ANIMATION_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {ImageTransparency = 1} -- Fully transparent
+            ):Play()
             
             if wasHolding and holdDuration < HOLD_TIME then
                 -- Short tap, toggle console
@@ -845,33 +823,30 @@ function BisamConsole:CreateToggleButton()
                 if posY > (1 - threshold) then posY = 0.98 end
                 
                 -- Animate to snapped position with smoother animation using CONFIG speed
-                toggleButton:TweenPosition(
-                    UDim2.new(posX, 0, posY, 0),
-                    Enum.EasingDirection.Out,
-                    Enum.EasingStyle.Back, -- Bouncy effect
-                    CONFIG.DRAG_ANIMATION_SPEED, -- Use CONFIG animation speed
-                    true -- Override
-                )
+                game:GetService("TweenService"):Create(
+                    toggleButton,
+                    TweenInfo.new(CONFIG.DRAG_ANIMATION_SPEED, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                    {Position = UDim2.new(posX, 0, posY, 0)}
+                ):Play()
                 
                 -- Add subtle scale effect when releasing with CONFIG animation time
-                 local originalSize = toggleButton.Size
-                 toggleButton:TweenSize(
-                     UDim2.new(originalSize.X.Scale * 1.1, originalSize.X.Offset, 
-                               originalSize.Y.Scale * 1.1, originalSize.Y.Offset),
-                     Enum.EasingDirection.Out,
-                     Enum.EasingStyle.Quad,
-                     CONFIG.ANIMATION_TIME / 2, -- Half animation time for quick grow
-                     true,
-                     function()
-                         toggleButton:TweenSize(
-                             originalSize,
-                             Enum.EasingDirection.Out,
-                             Enum.EasingStyle.Back,
-                             CONFIG.ANIMATION_TIME, -- Full animation time for bounce back
-                             true
-                         )
-                     end
-                 )
+                local originalSize = toggleButton.Size
+                local growTween = game:GetService("TweenService"):Create(
+                    toggleButton,
+                    TweenInfo.new(CONFIG.ANIMATION_TIME / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {Size = UDim2.new(originalSize.X.Scale * 1.1, originalSize.X.Offset, 
+                                     originalSize.Y.Scale * 1.1, originalSize.Y.Offset)}
+                )
+                
+                growTween.Completed:Connect(function()
+                    game:GetService("TweenService"):Create(
+                        toggleButton,
+                        TweenInfo.new(CONFIG.ANIMATION_TIME, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                        {Size = originalSize}
+                    ):Play()
+                end)
+                
+                growTween:Play()
             end
             
             isDragging = false
@@ -888,14 +863,35 @@ function BisamConsole:CreateToggleButton()
                 
                 -- Add visual feedback for active dragging with CONFIG intensity
                 if CONFIG.MOBILE_DRAG_FEEDBACK then
-                    hoverEffect.BackgroundTransparency = 1 - CONFIG.TOUCH_FEEDBACK_INTENSITY
+                    -- Use TweenService for smooth transition
+                    game:GetService("TweenService"):Create(
+                        hoverEffect,
+                        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                        {BackgroundTransparency = 1 - CONFIG.TOUCH_FEEDBACK_INTENSITY}
+                    ):Play()
                 end
                 
                 -- Calculate delta and apply with smooth movement
                 local delta = input.Position - dragStartPosition
+                
+                -- Get screen size for boundary checking
+                local screenSize = gui.AbsoluteSize
+                local buttonSize = toggleButton.AbsoluteSize
+                
+                -- Calculate new position with boundary limits
+                local newXOffset = dragStartOffset.X.Offset + delta.X
+                local newYOffset = dragStartOffset.Y.Offset + delta.Y
+                
+                -- Ensure button stays within screen bounds
+                local maxX = screenSize.X - buttonSize.X
+                local maxY = screenSize.Y - buttonSize.Y
+                
+                newXOffset = math.clamp(newXOffset, 0, maxX)
+                newYOffset = math.clamp(newYOffset, 0, maxY)
+                
                 toggleButton.Position = UDim2.new(
-                    dragStartOffset.X.Scale, dragStartOffset.X.Offset + delta.X,
-                    dragStartOffset.Y.Scale, dragStartOffset.Y.Offset + delta.Y
+                    dragStartOffset.X.Scale, newXOffset,
+                    dragStartOffset.Y.Scale, newYOffset
                 )
             end
         end
@@ -1414,9 +1410,9 @@ function BisamConsole:MaximizeConsole()
     mainFrame.Position = startPos
     mainFrame.Visible = true
     
-    -- Target size and position
-    local targetSize = UDim2.new(0.6, 0, 0.7, 0)
-    local targetPos = UDim2.new(0.5, -targetSize.X.Offset/2, 0.5, -targetSize.Y.Offset/2)
+    -- Target size and position - fixed to use absolute values to avoid size bugs
+    local targetSize = UDim2.new(0.6, 0, 0.6, 0) -- Fixed consistent size
+    local targetPos = UDim2.new(0.2, 0, 0.2, 0) -- Fixed position
     
     -- Apply initial transparency
     local originalTransparencies = {}
@@ -1503,16 +1499,14 @@ function BisamConsole:ToggleFilterMenu()
                 local screenSize = gui.AbsoluteSize
                 local menuSize = menuContainer.AbsoluteSize
                 
-                -- Determine best position (avoid going off screen)
-                local xPos = math.clamp(togglePos.X + toggleSize.X/2 - menuSize.X/2, 
-                                       10, screenSize.X - menuSize.X - 10)
-                local yPos = math.clamp(togglePos.Y - menuSize.Y - 10,
-                                       10, screenSize.Y - menuSize.Y - 10)
+                -- Position in the corner of the screen, away from the toggle button
+                -- This ensures it's always visible and in a consistent location
+                local xPos = screenSize.X - menuSize.X - 20 -- 20px from right edge
+                local yPos = 20 -- 20px from top edge
                 
-                -- If menu would appear above screen, position it below toggle instead
-                if yPos < 10 then
-                    yPos = togglePos.Y + toggleSize.Y + 10
-                end
+                -- Make sure it's fully visible on screen
+                xPos = math.clamp(xPos, 20, screenSize.X - menuSize.X - 20)
+                yPos = math.clamp(yPos, 20, screenSize.Y - menuSize.Y - 20)
                 
                 menuContainer.Position = UDim2.new(0, xPos, 0, yPos)
             end
