@@ -912,6 +912,13 @@ function BisamConsole:CreateFilterMenu()
     menuContainer.Visible = false
     menuContainer.Parent = gui
     
+    -- Add draggable functionality for mobile
+    local isDraggingMenu = false
+    local menuDragStartPosition = nil
+    local menuDragStartOffset = nil
+    local menuHoldStartTime = nil
+    local MENU_HOLD_TIME = CONFIG.MOBILE_HOLD_TIME -- Use the same hold time as toggle button
+    
     -- Create shadow
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
@@ -932,6 +939,29 @@ function BisamConsole:CreateFilterMenu()
     filterMenu.Position = UDim2.new(0, 10, 0, 10)  -- Center in container
     filterMenu.Parent = menuContainer
     createCorner(filterMenu, UDim.new(0, 10))  -- More rounded corners
+    
+    -- Create drag indicator for filter menu
+    local menuDragIndicator = Instance.new("Frame")
+    menuDragIndicator.Name = "DragIndicator"
+    menuDragIndicator.Size = UDim2.new(0.6, 0, 0, 0) -- Will be animated
+    menuDragIndicator.Position = UDim2.new(0.2, 0, 0, 5) -- At the top
+    menuDragIndicator.BackgroundColor3 = CONFIG.COLORS.DRAG_INDICATOR
+    menuDragIndicator.BackgroundTransparency = 0.2
+    menuDragIndicator.BorderSizePixel = 0
+    menuDragIndicator.Visible = false
+    menuDragIndicator.Parent = filterMenu
+    createCorner(menuDragIndicator, UDim.new(1, 0)) -- Fully rounded
+    
+    -- Create hold progress indicator for filter menu
+    local menuHoldIndicator = Instance.new("Frame")
+    menuHoldIndicator.Name = "HoldIndicator"
+    menuHoldIndicator.Size = UDim2.new(0, 0, 0, 4)
+    menuHoldIndicator.Position = UDim2.new(0, 0, 0, 0)
+    menuHoldIndicator.BackgroundColor3 = CONFIG.COLORS.GRADIENT_END
+    menuHoldIndicator.BorderSizePixel = 0
+    menuHoldIndicator.Visible = false
+    menuHoldIndicator.Parent = filterMenu
+    createCorner(menuHoldIndicator, UDim.new(0, 2))
     
     -- Add subtle inner stroke for depth
     local stroke = Instance.new("UIStroke")
@@ -1160,6 +1190,121 @@ function BisamConsole:CreateFilterMenu()
     end)
     closeButton.Font = Enum.Font.GothamSemibold
     
+    -- Add input handlers for dragging the filter menu on mobile
+    filterMenu.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            menuHoldStartTime = tick()
+            menuDragStartPosition = input.Position
+            menuDragStartOffset = menuContainer.Position
+            isDraggingMenu = false -- Reset dragging state on new touch
+            
+            -- Show and animate hold indicator
+            menuHoldIndicator.Visible = true
+            menuHoldIndicator.Size = UDim2.new(0, 0, 0, 4)
+            
+            -- Animate hold indicator with smooth progress
+            task.spawn(function()
+                local startTime = tick()
+                while menuHoldStartTime and tick() - startTime < MENU_HOLD_TIME do
+                    local progress = (tick() - startTime) / MENU_HOLD_TIME
+                    game:GetService("TweenService"):Create(
+                        menuHoldIndicator,
+                        TweenInfo.new(0.03, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+                        {Size = UDim2.new(progress, 0, 0, 4)}
+                    ):Play()
+                    task.wait(0.03)
+                end
+                
+                -- If still holding after time elapsed, show drag indicator
+                if menuHoldStartTime and tick() - startTime >= MENU_HOLD_TIME then
+                    menuHoldIndicator.Visible = false
+                    menuDragIndicator.Visible = true
+                    isDraggingMenu = true -- Set dragging to true after hold time
+                    
+                    -- Animate drag indicator appearance
+                    game:GetService("TweenService"):Create(
+                        menuDragIndicator,
+                        TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                        {Size = UDim2.new(0.6, 0, 0, 6)}
+                    ):Play()
+                end
+            end)
+        end
+    end)
+    
+    filterMenu.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            local holdDuration = tick() - (menuHoldStartTime or 0)
+            menuHoldStartTime = nil
+            
+            -- Hide indicators
+            menuHoldIndicator.Visible = false
+            menuDragIndicator.Visible = false
+            
+            -- Snap to grid effect when releasing drag
+            if isDraggingMenu then
+                -- Get screen size for boundary checking
+                local screenSize = gui.AbsoluteSize
+                local menuSize = menuContainer.AbsoluteSize
+                
+                -- Calculate current position
+                local posX = menuContainer.Position.X.Offset / screenSize.X
+                local posY = menuContainer.Position.Y.Offset / screenSize.Y
+                
+                -- Snap to edges if close with better edge detection using CONFIG threshold
+                local threshold = CONFIG.SNAP_TO_EDGE_THRESHOLD
+                if posX < threshold then posX = 20 end
+                if posX > (1 - threshold) then posX = screenSize.X - menuSize.X - 20 end
+                if posY < threshold then posY = 20 end
+                if posY > (1 - threshold) then posY = screenSize.Y - menuSize.Y - 20 end
+                
+                -- Animate to snapped position
+                game:GetService("TweenService"):Create(
+                    menuContainer,
+                    TweenInfo.new(CONFIG.DRAG_ANIMATION_SPEED, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                    {Position = UDim2.new(0, posX, 0, posY)}
+                ):Play()
+            end
+            
+            isDraggingMenu = false
+        end
+    end)
+    
+    filterMenu.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch and menuHoldStartTime then
+            local holdDuration = tick() - menuHoldStartTime
+            
+            -- Check if we're already dragging or if we've held long enough
+            if isDraggingMenu or holdDuration >= MENU_HOLD_TIME then
+                -- Set dragging flag if not already set
+                isDraggingMenu = true
+                
+                -- Calculate delta and apply with smooth movement
+                local delta = input.Position - menuDragStartPosition
+                
+                -- Get screen size for boundary checking
+                local screenSize = gui.AbsoluteSize
+                local menuSize = menuContainer.AbsoluteSize
+                
+                -- Calculate new position with boundary limits
+                local newXOffset = menuDragStartOffset.X.Offset + delta.X
+                local newYOffset = menuDragStartOffset.Y.Offset + delta.Y
+                
+                -- Ensure menu stays within screen bounds
+                local maxX = screenSize.X - menuSize.X
+                local maxY = screenSize.Y - menuSize.Y
+                
+                newXOffset = math.clamp(newXOffset, 0, maxX)
+                newYOffset = math.clamp(newYOffset, 0, maxY)
+                
+                menuContainer.Position = UDim2.new(
+                    menuDragStartOffset.X.Scale, newXOffset,
+                    menuDragStartOffset.Y.Scale, newYOffset
+                )
+            end
+        end
+    end)
+    
     -- Close when clicking outside
     local closeDetector = Instance.new("TextButton")
     closeDetector.Name = "CloseDetector"
@@ -1171,16 +1316,7 @@ function BisamConsole:CreateFilterMenu()
     closeDetector.Visible = false
     
     closeDetector.MouseButton1Click:Connect(function()
-        -- Animate closing
-        task.spawn(function()
-            for i = 1, 0, -0.1 do
-                if not menuContainer or not menuContainer.Parent then break end
-                menuContainer.BackgroundTransparency = i
-                task.wait(0.01)
-            end
-            menuContainer.Visible = false
-            closeDetector.Visible = false
-        end)
+        self:ToggleFilterMenu() -- Use the toggle function instead of direct animation
     end)
     
     -- Store reference to container for animations
@@ -1417,7 +1553,10 @@ function BisamConsole:MaximizeConsole()
     local targetPos = UDim2.new(0.2, 0, 0.2, 0) -- Fixed position
     
     -- Reset the frameContainer size to ensure consistent UI sizing
+    -- This is critical to fix the UI size inconsistency when reopening
     if mainFrame and mainFrame.Parent then
+        -- Immediately set the parent frame to the target size and position before animation
+        -- This ensures the UI will always be the correct size when maximized
         mainFrame.Parent.Size = targetSize
         mainFrame.Parent.Position = targetPos
     end
@@ -1496,7 +1635,7 @@ function BisamConsole:ToggleFilterMenu()
         if not menuContainer.Visible then
             -- Show filter menu with animation
             menuContainer.Visible = true
-            menuContainer.BackgroundTransparency = 1 -- Keep fully transparent
+            menuContainer.BackgroundTransparency = 1 -- Always keep container fully transparent
             
             -- Position menu relative to toggle button if it exists
             if toggleButton and toggleButton.Parent then
@@ -1543,6 +1682,9 @@ function BisamConsole:ToggleFilterMenu()
                                                      0, menuContainer.AbsoluteSize.Y + (menuContainer.AbsoluteSize.Y * 0.01))
                         task.wait(0.01)
                     end
+                    
+                    -- Ensure final transparency
+                    filterMenuFrame.BackgroundTransparency = 0
                 end
                 
                 -- Ensure final size
@@ -1562,6 +1704,9 @@ function BisamConsole:ToggleFilterMenu()
                                                      0, menuContainer.AbsoluteSize.Y - (menuContainer.AbsoluteSize.Y * 0.01))
                         task.wait(0.01)
                     end
+                    
+                    -- Ensure final transparency to prevent white frame
+                    filterMenuFrame.BackgroundTransparency = 1
                 end
                 
                 menuContainer.Visible = false
