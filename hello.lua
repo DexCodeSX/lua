@@ -1479,14 +1479,19 @@ function BisamConsole:MinimizeConsole()
     
     -- Save the target size and position for when we maximize again
     -- This ensures the console returns to the same size after minimizing
-    if not mainFrame:GetAttribute("TargetSize") then
-        mainFrame:SetAttribute("TargetSize", {X = {Scale = startSize.X.Scale, Offset = startSize.X.Offset}, 
-                                            Y = {Scale = startSize.Y.Scale, Offset = startSize.Y.Offset}})
+    -- Store individual components since tables aren't supported as attributes
+    if not mainFrame:GetAttribute("TargetSizeXScale") then
+        mainFrame:SetAttribute("TargetSizeXScale", startSize.X.Scale)
+        mainFrame:SetAttribute("TargetSizeXOffset", startSize.X.Offset)
+        mainFrame:SetAttribute("TargetSizeYScale", startSize.Y.Scale)
+        mainFrame:SetAttribute("TargetSizeYOffset", startSize.Y.Offset)
     end
     
-    if not mainFrame:GetAttribute("TargetPos") then
-        mainFrame:SetAttribute("TargetPos", {X = {Scale = startPos.X.Scale, Offset = startPos.X.Offset}, 
-                                           Y = {Scale = startPos.Y.Scale, Offset = startPos.Y.Offset}})
+    if not mainFrame:GetAttribute("TargetPosXScale") then
+        mainFrame:SetAttribute("TargetPosXScale", startPos.X.Scale)
+        mainFrame:SetAttribute("TargetPosXOffset", startPos.X.Offset)
+        mainFrame:SetAttribute("TargetPosYScale", startPos.Y.Scale)
+        mainFrame:SetAttribute("TargetPosYOffset", startPos.Y.Offset)
     end
     
     -- Animate minimizing
@@ -1566,24 +1571,31 @@ function BisamConsole:MaximizeConsole()
     mainFrame.Visible = true
     
     -- Get stored target size and position or use defaults
-    local targetSizeAttr = mainFrame:GetAttribute("TargetSize")
-    local targetPosAttr = mainFrame:GetAttribute("TargetPos")
+    local targetSizeXScale = mainFrame:GetAttribute("TargetSizeXScale")
+    local targetSizeXOffset = mainFrame:GetAttribute("TargetSizeXOffset")
+    local targetSizeYScale = mainFrame:GetAttribute("TargetSizeYScale")
+    local targetSizeYOffset = mainFrame:GetAttribute("TargetSizeYOffset")
+    
+    local targetPosXScale = mainFrame:GetAttribute("TargetPosXScale")
+    local targetPosXOffset = mainFrame:GetAttribute("TargetPosXOffset")
+    local targetPosYScale = mainFrame:GetAttribute("TargetPosYScale")
+    local targetPosYOffset = mainFrame:GetAttribute("TargetPosYOffset")
     
     local targetSize, targetPos
     
-    if targetSizeAttr then
+    if targetSizeXScale ~= nil then
         targetSize = UDim2.new(
-            targetSizeAttr.X.Scale, targetSizeAttr.X.Offset,
-            targetSizeAttr.Y.Scale, targetSizeAttr.Y.Offset
+            targetSizeXScale, targetSizeXOffset,
+            targetSizeYScale, targetSizeYOffset
         )
     else
         targetSize = UDim2.new(0.6, 0, 0.6, 0) -- Default size
     end
     
-    if targetPosAttr then
+    if targetPosXScale ~= nil then
         targetPos = UDim2.new(
-            targetPosAttr.X.Scale, targetPosAttr.X.Offset,
-            targetPosAttr.Y.Scale, targetPosAttr.Y.Offset
+            targetPosXScale, targetPosXOffset,
+            targetPosYScale, targetPosYOffset
         )
     else
         targetPos = UDim2.new(0.2, 0, 0.2, 0) -- Default position
@@ -1598,14 +1610,19 @@ function BisamConsole:MaximizeConsole()
         mainFrame.Parent.Position = targetPos
         
         -- Store these values as attributes to ensure they're preserved
-        if not mainFrame:GetAttribute("TargetSize") then
-            mainFrame:SetAttribute("TargetSize", {X = {Scale = targetSize.X.Scale, Offset = targetSize.X.Offset}, 
-                                                Y = {Scale = targetSize.Y.Scale, Offset = targetSize.Y.Offset}})
+        -- Store individual components since tables aren't supported as attributes
+        if not mainFrame:GetAttribute("TargetSizeXScale") then
+            mainFrame:SetAttribute("TargetSizeXScale", targetSize.X.Scale)
+            mainFrame:SetAttribute("TargetSizeXOffset", targetSize.X.Offset)
+            mainFrame:SetAttribute("TargetSizeYScale", targetSize.Y.Scale)
+            mainFrame:SetAttribute("TargetSizeYOffset", targetSize.Y.Offset)
         end
         
-        if not mainFrame:GetAttribute("TargetPos") then
-            mainFrame:SetAttribute("TargetPos", {X = {Scale = targetPos.X.Scale, Offset = targetPos.X.Offset}, 
-                                               Y = {Scale = targetPos.Y.Scale, Offset = targetPos.Y.Offset}})
+        if not mainFrame:GetAttribute("TargetPosXScale") then
+            mainFrame:SetAttribute("TargetPosXScale", targetPos.X.Scale)
+            mainFrame:SetAttribute("TargetPosXOffset", targetPos.X.Offset)
+            mainFrame:SetAttribute("TargetPosYScale", targetPos.Y.Scale)
+            mainFrame:SetAttribute("TargetPosYOffset", targetPos.Y.Offset)
         end
     end
     

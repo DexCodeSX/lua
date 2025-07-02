@@ -49,10 +49,9 @@ end
 -- Destroy existing console
 destroyExistingConsole()
 
--- Now load the hello.lua script
+-- Now load the hello.lua script from GitHub
 print("Loading BisamConsole...")
-local scriptPath = "c:\\Users\\Bisam\\Documents\\luablox\\hello.lua"
-local BisamConsole = loadfile(scriptPath)()
+local BisamConsole = loadstring(game:HttpGet('https://raw.githubusercontent.com/DexCodeSX/lua/refs/heads/main/hello.lua'))()
 BisamConsole:Initialize()
 
 print("BisamConsole has been reloaded with fixes")
